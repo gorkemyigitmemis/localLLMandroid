@@ -7,10 +7,12 @@ const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
  * @type {import('@react-native/metro-config').MetroConfig}
  */
 const defaultConfig = getDefaultConfig(__dirname);
+const { assetExts, sourceExts } = defaultConfig.resolver;
 
 const config = {
   resolver: {
-    assetExts: [...defaultConfig.resolver.assetExts, 'gguf', 'bin'],
+    assetExts: [...assetExts, 'gguf', 'bin'],
+    sourceExts: sourceExts.filter((ext) => ext !== 'gguf' && ext !== 'bin'),
   },
 };
 

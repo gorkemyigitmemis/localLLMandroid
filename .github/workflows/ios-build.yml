@@ -46,7 +46,7 @@ jobs:
       - name: Build iOS App
         run: |
           export NODE_OPTIONS="--max_old_space_size=8192"
-          npx react-native bundle --entry-file index.js --platform ios --dev false --bundle-output ios/main.jsbundle --assets-dest ios
+          npx react-native bundle --entry-file index.js --platform ios --dev false --bundle-output ios/main.jsbundle --assets-dest ios --reset-cache
           
           export SKIP_BUNDLING=1
           xcodebuild clean build -workspace ios/LocalLLMios.xcworkspace \
