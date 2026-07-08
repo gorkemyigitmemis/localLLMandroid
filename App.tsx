@@ -1,20 +1,21 @@
 import React from 'react';
-import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
+import { StatusBar, StyleSheet } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ChatScreen } from './src/screens/ChatScreen';
 
 const App = () => {
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#EFEFEF" />
+    <SafeAreaProvider style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <ChatScreen />
-    </SafeAreaView>
+    </SafeAreaProvider>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EFEFEF',
+    backgroundColor: '#000000',
   },
 });
 
