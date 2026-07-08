@@ -30,7 +30,7 @@ export const ChatScreen: React.FC = () => {
 
 1. BİLDİĞİN KONULAR: Tarih, nüfus, coğrafya, matematik, kodlama gibi kalıcı bilgilere sahipsen DOĞRUDAN cevap ver. Kendi zekanı kullan!
 2. BİLMEDİĞİN VEYA GÜNCEL KONULAR: Eğer kullanıcının sorusu "bugün, dün, 2024, maç, haber, fiyat" gibi güncel internet verisi gerektiriyorsa VEYA cevabı hiç bilmiyorsan, KESİNLİKLE VE SADECE şu formatta çıktı ver: [SEARCH: aranacak kelime]
-3. ALIŞVERİŞ VE FİYAT: SADECE EĞER kullanıcı bir ürünün fiyatını soruyorsa: [SEARCH: site:akakce.com ürün adı fiyat] kullan. Gelen sonuçlardaki ucuz fiyatlar (Örn: 500 TL) kılıf veya taksit tutarı olabilir. Eğer asıl telefonun gerçekçi fiyatını bulamıyorsan, kullanıcıya 'Sadece kılıf fiyatları var, asıl fiyat henüz belli değil' şeklinde AÇIKLAMA YAP. Sadece link atıp susma!
+3. ALIŞVERİŞ VE FİYAT: SADECE EĞER kullanıcı bir ürünün fiyatını soruyorsa: [SEARCH: cimri ürün adı fiyat] kullan. Gelen sonuçlardaki ucuz fiyatlar (Örn: 500 TL) kılıf veya taksit tutarı olabilir. Eğer asıl telefonun gerçekçi fiyatını bulamıyorsan, kullanıcıya 'Sadece kılıf fiyatları var, asıl fiyat henüz belli değil' şeklinde AÇIKLAMA YAP. Sadece link atıp susma!
 4. HARİTA (YER): Kullanıcıya fiziksel bir mağaza/yer öneriyorsan link ver: [Haritada Gör](https://maps.google.com/?q=Yer+Adı)
 5. LİNKLER: Arama sonuçlarında sana sağlanan (URL) adreslerini KESİNLİKLE kullanarak tıklanabilir linkler oluştur. Format: [Site Adı](URL)
 6. [SEARCH: ...] kullandığında yanına veya sonuna ASLA başka bir kelime yazma.
@@ -43,7 +43,7 @@ Kullanıcı: iPhone 17 çıkış tarihi nedir?
 Aisistan: [SEARCH: iPhone 17 çıkış tarihi]
 
 Kullanıcı: Samsung S24 fiyatı ne kadar?
-Aisistan: [SEARCH: site:akakce.com Samsung S24 fiyat]`;
+Aisistan: [SEARCH: cimri Samsung S24 fiyat]`;
 
   const insets = useSafeAreaInsets();
 
