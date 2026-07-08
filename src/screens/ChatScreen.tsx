@@ -30,13 +30,13 @@ export const ChatScreen: React.FC = () => {
 
 1. BİLDİĞİN KONULAR: Tarih, nüfus, coğrafya, matematik, kodlama gibi kalıcı bilgilere sahipsen DOĞRUDAN cevap ver. Kendi zekanı kullan!
 2. BİLMEDİĞİN VEYA GÜNCEL KONULAR: Eğer kullanıcının sorusu "bugün, dün, 2024, maç, haber, fiyat" gibi güncel internet verisi gerektiriyorsa VEYA cevabı hiç bilmiyorsan, KESİNLİKLE VE SADECE şu formatta çıktı ver: [SEARCH: aranacak kelime]
-3. ALIŞVERİŞ (FİYAT): SADECE EĞER kullanıcı bir ürünün "fiyatını" veya "en ucuz nerede" olduğunu kesin soruyorsa: [SEARCH: site:akakce.com ürün adı fiyat]
+3. ALIŞVERİŞ VE FİYAT: SADECE EĞER kullanıcı bir ürünün fiyatını soruyorsa: [SEARCH: site:akakce.com ürün adı fiyat] kullan. Gelen sonuçlardaki ucuz fiyatlar (Örn: iPhone için 500 TL) kılıf veya taksit tutarı olabilir. Asla kılıf fiyatını telefon fiyatı sanıp uydurma!
 4. HARİTA (YER): Kullanıcıya fiziksel bir mağaza/yer öneriyorsan link ver: [Haritada Gör](https://maps.google.com/?q=Yer+Adı)
 5. [SEARCH: ...] kullandığında yanına veya sonuna ASLA başka bir kelime yazma.
 
 Örnekler:
 Kullanıcı: Türkiye'nin nüfusu kaç?
-Aisistan: Türkiye'nin nüfusu yaklaşık 85 milyondur. (DOĞRUDAN CEVAP VER, ARAMA YAPMA)
+Aisistan: Türkiye'nin nüfusu yaklaşık 85 milyondur. (Arama yapma)
 
 Kullanıcı: iPhone 17 çıkış tarihi nedir?
 Aisistan: [SEARCH: iPhone 17 çıkış tarihi]
@@ -210,7 +210,7 @@ Aisistan: [SEARCH: site:akakce.com Samsung S24 fiyat]`;
         const newHistory = [
           ...history,
           { role: 'Assistant', text: fullResponse },
-          { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nYukarıdaki güncel bilgilere dayanarak kullanıcının sorusunu Türkçe olarak detaylıca yanıtla. [SEARCH] etiketini tekrar KULLANMA.` }
+          { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nYukarıdaki güncel arama verilerine dayanarak soruyu Türkçe yanıtla. DİKKAT: Kullanıcı ürün fiyatı soruyorsa, arama sonuçlarındaki aşırı ucuz fiyatların (Örn: 500 TL'ye iPhone) telefon kılıfı, şarj aleti veya taksit tutarı olabileceğini analiz et. Asla kılıf fiyatını telefon fiyatı sanıp uydurma! Sadece mantıklı asıl ürün fiyatını söyle. [SEARCH] etiketini tekrar KULLANMA.` }
         ];
         
         let finalResponse = "";
@@ -278,18 +278,20 @@ Aisistan: [SEARCH: site:akakce.com Samsung S24 fiyat]`;
     return (
       <View style={[styles.loadingContainer, isDark && styles.loadingContainerDark]}>
         {isModelLoading ? (
-          <BlurView style={styles.glassCard} blurType={isDark ? "dark" : "light"} blurAmount={10}>
+          <View style={styles.glassCard}>
+            <BlurView style={StyleSheet.absoluteFill} blurType={isDark ? "dark" : "light"} blurAmount={25} />
             <ActivityIndicator size="large" color="#0A84FF" />
             <Text style={[styles.loadingText, isDark && styles.loadingTextDark]}>{loadingText}</Text>
-          </BlurView>
+          </View>
         ) : (
-          <BlurView style={styles.glassCard} blurType={isDark ? "dark" : "light"} blurAmount={15}>
+          <View style={styles.glassCard}>
+            <BlurView style={StyleSheet.absoluteFill} blurType={isDark ? "dark" : "light"} blurAmount={25} />
             <Text style={[styles.welcomeTitle, isDark && styles.welcomeTitleDark]}>Aisistan</Text>
             <Text style={[styles.subText, isDark && styles.subTextDark]}>Cihazınızda çalışan, çevrimdışı ve gizlilik odaklı süper asistanınıza hoş geldiniz.</Text>
             <TouchableOpacity style={styles.premiumButton} onPress={handleSelectModel}>
               <Text style={styles.premiumButtonText}>GGUF Modeli Yükle</Text>
             </TouchableOpacity>
-          </BlurView>
+          </View>
         )}
       </View>
     );
