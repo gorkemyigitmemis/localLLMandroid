@@ -19,18 +19,29 @@ export const performWebSearch = async (query: string): Promise<string> => {
     
     const results: string[] = [];
     
-    // Regex to match DuckDuckGo Lite snippets (result-snippet or result__snippet)
-    const snippetRegex = /class=["']result[-_]*snippet["'][^>]*>([\s\S]*?)<\/(?:td|div|span|a)>/gi;
+    // Regex to match DuckDuckGo Lite snippets and their href
+    const snippetRegex = /<a[^>]*class=["']result[-_]*snippet["'][^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
     let match;
     let count = 0;
 
     while ((match = snippetRegex.exec(html)) !== null && count < 3) {
+      let url = match[1];
+      // Decode duckduckgo redirect URL
+      const uddgMatch = url.match(/uddg=([^&]+)/);
+      if (uddgMatch) {
+        url = decodeURIComponent(uddgMatch[1]);
+      } else if (url.startsWith('//')) {
+        url = 'https:' + url;
+      } else if (url.startsWith('/')) {
+        url = 'https://duckduckgo.com' + url;
+      }
+
       // Strip inner HTML tags to get pure text
-      let pureText = match[1].replace(/<[^>]*>?/gm, '').trim();
-      // Decode common HTML entities
+      let pureText = match[2].replace(/<[^>]*>?/gm, '').trim();
       pureText = pureText.replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+      
       if (pureText.length > 10) {
-        results.push(pureText);
+        results.push(`[Kaynak ${count + 1}] (${url}): ${pureText}`);
         count++;
       }
     }
@@ -39,7 +50,7 @@ export const performWebSearch = async (query: string): Promise<string> => {
       return "İnternet aramasında belirgin bir sonuç bulunamadı.";
     }
 
-    return results.map((r, i) => `[Kaynak ${i + 1}]: ${r}`).join('\n');
+    return results.join('\n');
     
   } catch (error) {
     console.error("Web Search Error:", error);

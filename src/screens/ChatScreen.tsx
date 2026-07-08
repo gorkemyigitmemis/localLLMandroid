@@ -32,7 +32,8 @@ export const ChatScreen: React.FC = () => {
 2. BİLMEDİĞİN VEYA GÜNCEL KONULAR: Eğer kullanıcının sorusu "bugün, dün, 2024, maç, haber, fiyat" gibi güncel internet verisi gerektiriyorsa VEYA cevabı hiç bilmiyorsan, KESİNLİKLE VE SADECE şu formatta çıktı ver: [SEARCH: aranacak kelime]
 3. ALIŞVERİŞ VE FİYAT: SADECE EĞER kullanıcı bir ürünün fiyatını soruyorsa: [SEARCH: site:akakce.com ürün adı fiyat] kullan. Gelen sonuçlardaki ucuz fiyatlar (Örn: iPhone için 500 TL) kılıf veya taksit tutarı olabilir. Asla kılıf fiyatını telefon fiyatı sanıp uydurma!
 4. HARİTA (YER): Kullanıcıya fiziksel bir mağaza/yer öneriyorsan link ver: [Haritada Gör](https://maps.google.com/?q=Yer+Adı)
-5. [SEARCH: ...] kullandığında yanına veya sonuna ASLA başka bir kelime yazma.
+5. LİNKLER: Arama sonuçlarında sana sağlanan (URL) adreslerini KESİNLİKLE kullanarak tıklanabilir linkler oluştur. Format: [Site Adı](URL)
+6. [SEARCH: ...] kullandığında yanına veya sonuna ASLA başka bir kelime yazma.
 
 Örnekler:
 Kullanıcı: Türkiye'nin nüfusu kaç?
@@ -210,7 +211,7 @@ Aisistan: [SEARCH: site:akakce.com Samsung S24 fiyat]`;
         const newHistory = [
           ...history,
           { role: 'Assistant', text: fullResponse },
-          { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nYukarıdaki güncel arama verilerine dayanarak soruyu Türkçe yanıtla. DİKKAT: Kullanıcı ürün fiyatı soruyorsa, arama sonuçlarındaki aşırı ucuz fiyatların (Örn: 500 TL'ye iPhone) telefon kılıfı, şarj aleti veya taksit tutarı olabileceğini analiz et. Asla kılıf fiyatını telefon fiyatı sanıp uydurma! Sadece mantıklı asıl ürün fiyatını söyle. [SEARCH] etiketini tekrar KULLANMA.` }
+          { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nYukarıdaki güncel arama verilerine dayanarak soruyu Türkçe yanıtla. ÖNEMLİ KURALLAR:\n1. Kaynaklarda belirtilen (URL) adreslerini kullanarak [Site Adı](URL) formatında tıklanabilir linkler oluştur.\n2. Fiyat soruluyorsa, arama sonuçlarındaki aşırı ucuz fiyatların (Örn: 500 TL) telefon kılıfı veya şarj aleti olabileceğini idrak et. Sadece mantıklı asıl ürün fiyatını söyle.\n3. [SEARCH] etiketini tekrar KULLANMA.` }
         ];
         
         let finalResponse = "";
