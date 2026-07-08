@@ -117,10 +117,10 @@ const styles = StyleSheet.create({
     borderColor: '#E5E5EA',
   },
   botBubbleDark: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#1E293B',
     borderBottomLeftRadius: 4,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
+    borderColor: '#334155',
   },
   text: {
     fontSize: 16,
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     color: '#1C1C1E',
   },
   botTextDark: {
-    color: '#F2F2F7',
+    color: '#F8FAFC',
   },
   ttsButton: {
     marginTop: 10,
@@ -144,7 +144,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   ttsButtonDark: {
-    backgroundColor: '#2C2C2E',
+    backgroundColor: '#0F172A',
+    borderWidth: 1,
+    borderColor: '#334155',
   },
   ttsText: {
     fontSize: 13,
@@ -152,7 +154,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   ttsTextDark: {
-    color: '#0A84FF',
+    color: '#38BDF8',
   },
   linkText: {
     textDecorationLine: 'underline',

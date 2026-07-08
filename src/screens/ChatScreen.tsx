@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F2F7',
   },
   safeAreaDark: {
-    backgroundColor: '#000000',
+    backgroundColor: '#0B1120', // Midnight blue instead of pure black
   },
   container: {
     flex: 1,
@@ -380,8 +380,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerDark: {
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderBottomColor: '#2C2C2E',
+    backgroundColor: 'rgba(11, 17, 32, 0.85)',
+    borderBottomColor: '#1E293B',
   },
   headerTitle: {
     fontSize: 20,
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFEFEF', 
   },
   loadingContainerDark: {
-    backgroundColor: '#000000',
+    backgroundColor: '#0B1120',
   },
   glassCard: {
     width: '85%',

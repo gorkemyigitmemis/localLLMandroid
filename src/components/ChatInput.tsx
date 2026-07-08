@@ -149,8 +149,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   containerDark: {
-    backgroundColor: '#1C1C1E',
-    borderColor: '#2C2C2E',
+    backgroundColor: '#0F172A', // Deep slate navy
+    borderColor: '#1E293B',
   },
   input: {
     flex: 1,
@@ -167,9 +167,9 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   inputDark: {
-    backgroundColor: '#2C2C2E',
-    borderColor: '#3A3A3C',
-    color: '#FFFFFF',
+    backgroundColor: '#1E293B', // Slate 800
+    borderColor: '#334155', // Slate 700
+    color: '#F8FAFC',
   },
   button: {
     marginLeft: 10,
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   micButtonDark: {
-    backgroundColor: '#2C2C2E',
+    backgroundColor: '#1E293B', // Slate 800
   },
   micButtonActive: {
     backgroundColor: '#FF3B30',
