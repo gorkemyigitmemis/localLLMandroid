@@ -12,7 +12,7 @@ interface Props {
   message: Message;
 }
 
-export const MessageBubble: React.FC<Props> = ({ message }) => {
+export const MessageBubble = React.memo<Props>(({ message }) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -81,7 +81,7 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

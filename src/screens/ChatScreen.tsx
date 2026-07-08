@@ -174,6 +174,7 @@ Aisistan: [SEARCH: site:akakce.com Samsung S24 fiyat]`;
     if (!llamaContext) return;
     
     let fullResponse = "";
+    let lastUpdate1 = Date.now();
     try {
       await llamaContext.completion(
         {
@@ -183,14 +184,27 @@ Aisistan: [SEARCH: site:akakce.com Samsung S24 fiyat]`;
         },
         (data) => {
           fullResponse += data.token;
-          setMessages((prevMessages) =>
-            prevMessages.map((msg) =>
-              msg.id === botMessageId
-                ? { ...msg, text: fullResponse }
-                : msg
-            )
-          );
+          const now = Date.now();
+          if (now - lastUpdate1 > 80) {
+            setMessages((prevMessages) =>
+              prevMessages.map((msg) =>
+                msg.id === botMessageId
+                  ? { ...msg, text: fullResponse }
+                  : msg
+              )
+            );
+            lastUpdate1 = now;
+          }
         }
+      );
+      
+      // Ensure final flush
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.id === botMessageId
+            ? { ...msg, text: fullResponse }
+            : msg
+        )
       );
 
       // Arama tag'ini kontrol et
@@ -215,6 +229,7 @@ Aisistan: [SEARCH: site:akakce.com Samsung S24 fiyat]`;
         ];
         
         let finalResponse = "";
+        let lastUpdate2 = Date.now();
         await llamaContext.completion(
           {
             prompt: buildPrompt(newHistory),
@@ -223,14 +238,26 @@ Aisistan: [SEARCH: site:akakce.com Samsung S24 fiyat]`;
           },
           (data) => {
             finalResponse += data.token;
-            setMessages((prevMessages) =>
-              prevMessages.map((msg) =>
-                msg.id === botMessageId
-                  ? { ...msg, text: `🔍 Aranmış konu: "${query}"\n\n${finalResponse}` }
-                  : msg
-              )
-            );
+            const now = Date.now();
+            if (now - lastUpdate2 > 80) {
+              setMessages((prevMessages) =>
+                prevMessages.map((msg) =>
+                  msg.id === botMessageId
+                    ? { ...msg, text: `🔍 Aranmış konu: "${query}"\n\n${finalResponse}` }
+                    : msg
+                )
+              );
+              lastUpdate2 = now;
+            }
           }
+        );
+        
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg.id === botMessageId
+              ? { ...msg, text: `🔍 Aranmış konu: "${query}"\n\n${finalResponse}` }
+              : msg
+          )
         );
         
         setConversation([...newHistory, { role: 'Assistant', text: finalResponse }]);
@@ -320,6 +347,10 @@ Aisistan: [SEARCH: site:akakce.com Samsung S24 fiyat]`;
           contentContainerStyle={styles.listContent}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          removeClippedSubviews={true}
+          initialNumToRender={15}
+          maxToRenderPerBatch={10}
+          windowSize={10}
         />
         <ChatInput onSend={handleSend} disabled={isStreaming} />
       </KeyboardAvoidingView>
