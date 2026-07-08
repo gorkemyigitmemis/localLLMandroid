@@ -5,7 +5,7 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
-platform :ios, '15.0'
+platform :ios, '16.0'
 prepare_react_native_project!
 
 linkage = ENV['USE_FRAMEWORKS']
@@ -34,6 +34,7 @@ target 'LocalLLMios' do
       target.build_configurations.each do |config_build|
         config_build.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
         config_build.build_settings['CODE_SIGN_IDENTITY'] = ''
+        config_build.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
       end
     end
   end
