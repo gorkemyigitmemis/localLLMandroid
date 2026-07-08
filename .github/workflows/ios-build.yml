@@ -45,7 +45,7 @@ jobs:
 
       - name: Build iOS App
         run: |
-          xcodebuild -workspace ios/LocalLLMios.xcworkspace \
+          xcodebuild clean build -workspace ios/LocalLLMios.xcworkspace \
             -scheme LocalLLMios \
             -configuration Release \
             -sdk iphoneos \
