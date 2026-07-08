@@ -19,9 +19,17 @@ export const ChatScreen: React.FC = () => {
   
   const flatListRef = useRef<FlatList>(null);
 
-  const SYSTEM_PROMPT = `Sen yardımsever, akıllı ve Türkçe konuşan bir asistansın. Eğer kullanıcının sorusu GÜNCEL BİLGİ, gerçek zamanlı veriler (örneğin fiyat, yeni çıkan telefon modelleri, güncel olaylar) gerektiriyorsa KESİNLİKLE şu formatta cevap ver: [SEARCH: aranacak kelime]
-Örnek: [SEARCH: iPhone 17 Pro Max fiyatı]
-Eğer soru arama gerektirmiyorsa, normal ve doğal bir şekilde Türkçe cevap ver. Lütfen gereksiz yere arama yapma.`;
+  const SYSTEM_PROMPT = `Sen yardımsever bir Türkçe asistansın. KESİN KURALLAR:
+1. Kullanıcının sorusu GÜNCEL BİLGİ, internet, gerçek zamanlı veriler (fiyat, çıkış tarihi, maç sonuçları vb.) gerektiriyorsa veya bilmiyorsan KESİNLİKLE VE SADECE şu formatta cevap ver: [SEARCH: aranacak kelime]
+2. [SEARCH: kelime] yazdıktan sonra ASLA başka bir şey yazma, cümleyi uzatma.
+3. "Bilmiyorum" veya "Şu anki bilgilere sahip değilim" DEME, anında [SEARCH: ...] kodunu kullan.
+
+ÖRNEKLER:
+Kullanıcı: iPhone 17 işlemcisi nedir?
+Sen: [SEARCH: iPhone 17 işlemcisi]
+
+Kullanıcı: Galatasaray son maçını kimle oynadı?
+Sen: [SEARCH: Galatasaray son maçı sonucu]`;
 
   useEffect(() => {
     return () => {
@@ -82,11 +90,17 @@ Eğer soru arama gerektirmiyorsa, normal ve doğal bir şekilde Türkçe cevap v
   };
 
   const buildPrompt = (history: {role: string, text: string}[]) => {
-    let p = `System: ${SYSTEM_PROMPT}\n\n`;
+    let p = `<start_of_turn>user\n${SYSTEM_PROMPT}<end_of_turn>\n`;
     history.forEach(msg => {
-      p += `${msg.role}: ${msg.text}\n`;
+      if (msg.role === 'User') {
+        p += `<start_of_turn>user\n${msg.text}<end_of_turn>\n`;
+      } else if (msg.role === 'Assistant') {
+        p += `<start_of_turn>model\n${msg.text}<end_of_turn>\n`;
+      } else if (msg.role === 'System') {
+        p += `<start_of_turn>user\n[GÜNCEL İNTERNET VERİSİ]: ${msg.text}\nYukarıdaki güncel verilere dayanarak kullanıcının son sorusunu doğal bir Türkçe ile yanıtla.<end_of_turn>\n`;
+      }
     });
-    p += `Assistant:`;
+    p += `<start_of_turn>model\n`;
     return p;
   };
 
