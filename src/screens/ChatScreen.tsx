@@ -271,13 +271,13 @@ Sen: [SEARCH: Galatasaray son maçı sonucu]`;
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <KeyboardAvoidingView 
         style={styles.container} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Gemma 2 Asistan</Text>
+          <Text style={styles.headerTitle}>Aisistan</Text>
           <TouchableOpacity onPress={clearHistory} style={styles.clearButton}>
             <Text style={styles.clearButtonText}>🗑️ Temizle</Text>
           </TouchableOpacity>

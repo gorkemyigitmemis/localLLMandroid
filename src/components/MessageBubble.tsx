@@ -13,35 +13,13 @@ interface Props {
 }
 
 export const MessageBubble: React.FC<Props> = ({ message }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  useEffect(() => {
-    Tts.setDefaultLanguage('tr-TR');
-    Tts.setDefaultRate(0.5);
-
-    const onFinish = () => setIsPlaying(false);
-    const onCancel = () => setIsPlaying(false);
-
-    Tts.addEventListener('tts-finish', onFinish);
-    Tts.addEventListener('tts-cancel', onCancel);
-
-    return () => {
-      Tts.removeAllListeners('tts-finish');
-      Tts.removeAllListeners('tts-cancel');
-    };
-  }, []);
-
   const handleSpeech = () => {
-    if (isPlaying) {
-      Tts.stop();
-      setIsPlaying(false);
-    } else {
-      Tts.stop();
-      const cleanText = message.text.replace(/🔍.*?(\n|$)/g, '').replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '$1').trim();
-      if (cleanText.length > 0) {
-        Tts.speak(cleanText);
-        setIsPlaying(true);
-      }
+    Tts.stop(); // Always stop current audio first
+    const cleanText = message.text.replace(/🔍.*?(\n|$)/g, '').replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '$1').trim();
+    if (cleanText.length > 0) {
+      Tts.setDefaultLanguage('tr-TR');
+      Tts.setDefaultRate(0.5);
+      Tts.speak(cleanText);
     }
   };
 
@@ -90,7 +68,7 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
         
         {!message.isUser && message.text.length > 0 && !message.text.includes('Düşünüyor...') && !message.text.includes('İnternette aranıyor') && (
           <TouchableOpacity onPress={handleSpeech} style={styles.ttsButton}>
-            <Text style={styles.ttsText}>{isPlaying ? '⏹️ Durdur' : '🔊 Sesli Oku'}</Text>
+            <Text style={styles.ttsText}>🔊 Sesli Oku</Text>
           </TouchableOpacity>
         )}
       </View>
