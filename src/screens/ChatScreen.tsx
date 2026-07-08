@@ -5,9 +5,12 @@ import DocumentPicker from 'react-native-document-picker';
 import RNFS from 'react-native-fs';
 import { MessageBubble, Message } from '../components/MessageBubble';
 import { ChatInput } from '../components/ChatInput';
+import { performWebSearch } from '../utils/searchEngine';
 
 export const ChatScreen: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [conversation, setConversation] = useState<{role: string, text: string}[]>([]);
+  
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [isModelLoading, setIsModelLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('');
@@ -15,10 +18,12 @@ export const ChatScreen: React.FC = () => {
   const [llamaContext, setLlamaContext] = useState<LlamaContext | null>(null);
   
   const flatListRef = useRef<FlatList>(null);
-  const currentStreamMessageId = useRef<string | null>(null);
+
+  const SYSTEM_PROMPT = `Sen yardımsever, akıllı ve Türkçe konuşan bir asistansın. Eğer kullanıcının sorusu GÜNCEL BİLGİ, gerçek zamanlı veriler (örneğin fiyat, yeni çıkan telefon modelleri, güncel olaylar) gerektiriyorsa KESİNLİKLE şu formatta cevap ver: [SEARCH: aranacak kelime]
+Örnek: [SEARCH: iPhone 17 Pro Max fiyatı]
+Eğer soru arama gerektirmiyorsa, normal ve doğal bir şekilde Türkçe cevap ver. Lütfen gereksiz yere arama yapma.`;
 
   useEffect(() => {
-    // Cleanup on unmount
     return () => {
       if (llamaContext) {
         llamaContext.release();
@@ -59,29 +64,109 @@ export const ChatScreen: React.FC = () => {
       setIsModelLoading(true);
       setLoadingText('Model kopyalanıyor (Bu işlem biraz sürebilir)...');
 
-      // Define destination path in Document directory
       const destPath = `${RNFS.DocumentDirectoryPath}/${res.name}`;
-
-      // Check if it already exists, if so delete it or just use it
       const exists = await RNFS.exists(destPath);
       if (exists) {
         await RNFS.unlink(destPath);
       }
 
-      // Copy file from URI to local documents
       await RNFS.copyFile(res.uri, destPath);
-
-      // Initialize the model
       await loadModel(destPath);
-
     } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
-        // User cancelled
-      } else {
+      if (!DocumentPicker.isCancel(err)) {
         console.error(err);
         Alert.alert('Hata', 'Dosya seçilirken bir hata oluştu.');
-        setIsModelLoading(false);
       }
+      setIsModelLoading(false);
+    }
+  };
+
+  const buildPrompt = (history: {role: string, text: string}[]) => {
+    let p = `System: ${SYSTEM_PROMPT}\n\n`;
+    history.forEach(msg => {
+      p += `${msg.role}: ${msg.text}\n`;
+    });
+    p += `Assistant:`;
+    return p;
+  };
+
+  const generateResponse = async (history: {role: string, text: string}[], botMessageId: string) => {
+    if (!llamaContext) return;
+    
+    let fullResponse = "";
+    try {
+      await llamaContext.completion(
+        {
+          prompt: buildPrompt(history),
+          n_predict: 200,
+          temperature: 0.3, 
+        },
+        (data) => {
+          fullResponse += data.token;
+          setMessages((prevMessages) =>
+            prevMessages.map((msg) =>
+              msg.id === botMessageId
+                ? { ...msg, text: fullResponse }
+                : msg
+            )
+          );
+        }
+      );
+
+      // Arama tag'ini kontrol et
+      const searchMatch = fullResponse.match(/\[SEARCH:\s*(.*?)\]/i);
+      if (searchMatch) {
+        const query = searchMatch[1].trim();
+        
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg.id === botMessageId
+              ? { ...msg, text: `🔍 İnternette aranıyor: "${query}"...\n` }
+              : msg
+          )
+        );
+
+        const searchResults = await performWebSearch(query);
+        
+        const newHistory = [
+          ...history,
+          { role: 'Assistant', text: fullResponse },
+          { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nYukarıdaki güncel bilgilere dayanarak kullanıcının sorusunu Türkçe olarak detaylıca yanıtla. [SEARCH] etiketini tekrar KULLANMA.` }
+        ];
+        
+        let finalResponse = "";
+        await llamaContext.completion(
+          {
+            prompt: buildPrompt(newHistory),
+            n_predict: 500,
+            temperature: 0.5,
+          },
+          (data) => {
+            finalResponse += data.token;
+            setMessages((prevMessages) =>
+              prevMessages.map((msg) =>
+                msg.id === botMessageId
+                  ? { ...msg, text: `🔍 Aranmış konu: "${query}"\n\n${finalResponse}` }
+                  : msg
+              )
+            );
+          }
+        );
+        
+        setConversation([...newHistory, { role: 'Assistant', text: finalResponse }]);
+      } else {
+        setConversation([...history, { role: 'Assistant', text: fullResponse }]);
+      }
+
+    } catch (error) {
+      console.error("LLaMA completion error:", error);
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.id === botMessageId
+            ? { ...msg, text: "Bir hata oluştu. Lütfen tekrar deneyin." }
+            : msg
+        )
+      );
     }
   };
 
@@ -95,74 +180,19 @@ export const ChatScreen: React.FC = () => {
     setMessages((prev) => [...prev, userMessage]);
     setIsStreaming(true);
 
-    const botMessageId = (Date.now() + 1).toString();
-    currentStreamMessageId.current = botMessageId;
+    const currentHistory = [...conversation, { role: 'User', text }];
+    setConversation(currentHistory);
 
+    const botMessageId = (Date.now() + 1).toString();
     const botMessage: Message = {
       id: botMessageId,
-      text: '',
+      text: 'Düşünüyor...',
       isUser: false,
     };
-
     setMessages((prev) => [...prev, botMessage]);
 
-    if (llamaContext) {
-      try {
-        await llamaContext.completion(
-          {
-            prompt: `User: ${text}\nAssistant:`,
-            n_predict: 200,
-            temperature: 0.7,
-          },
-          (data) => {
-            setMessages((prevMessages) =>
-              prevMessages.map((msg) =>
-                msg.id === currentStreamMessageId.current
-                  ? { ...msg, text: msg.text + data.token }
-                  : msg
-              )
-            );
-          }
-        );
-      } catch (error) {
-        console.error("LLaMA completion error:", error);
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg.id === currentStreamMessageId.current
-              ? { ...msg, text: "Bir hata oluştu. Lütfen tekrar deneyin." }
-              : msg
-          )
-        );
-      }
-    } else {
-      mockStreamResponse();
-    }
-
+    await generateResponse(currentHistory, botMessageId);
     setIsStreaming(false);
-  };
-
-  const mockStreamResponse = () => {
-    const words = "Merhaba, ben yerel LLM asistanınızım. Size nasıl yardımcı olabilirim?".split(' ');
-    let currentIndex = 0;
-
-    return new Promise<void>((resolve) => {
-      const interval = setInterval(() => {
-        if (currentIndex < words.length) {
-          const word = words[currentIndex] + ' ';
-          setMessages((prevMessages) =>
-            prevMessages.map((msg) =>
-              msg.id === currentStreamMessageId.current
-                ? { ...msg, text: msg.text + word }
-                : msg
-            )
-          );
-          currentIndex++;
-        } else {
-          clearInterval(interval);
-          resolve();
-        }
-      }, 100);
-    });
   };
 
   if (!isModelLoaded) {
