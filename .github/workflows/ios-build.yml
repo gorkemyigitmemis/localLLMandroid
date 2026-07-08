@@ -1,0 +1,77 @@
+name: iOS Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: Build iOS IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Install Ruby and CocoaPods
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Download GGUF Model
+        run: |
+          mkdir -p assets/models
+          curl -L "https://huggingface.co/bartowski/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf" -o assets/models/gemma.gguf
+
+      - name: Install Pods
+        run: |
+          cd ios
+          pod install
+
+      - name: Build iOS App
+        run: |
+          cd ios
+          # Note: To build an actual .ipa for devices, you need valid Apple certificates 
+          # and provisioning profiles. The command below creates an archive.
+          # For a real release, consider using Fastlane or configuring signing explicitly.
+          
+          xcodebuild -workspace LocalLLMios.xcworkspace \
+            -scheme LocalLLMios \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath $PWD/build/LocalLLMios.xcarchive \
+            clean archive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+          # Package the archive into an IPA (this typically requires signing, 
+          # but we package it as an unsigned ipa for artifact purposes)
+          # xcodebuild -exportArchive -archivePath $PWD/build/LocalLLMios.xcarchive -exportPath $PWD/build -exportOptionsPlist ExportOptions.plist
+          
+          # Since we bypassed signing, we can manually zip the app into an ipa payload
+          mkdir -p Payload
+          cp -r build/LocalLLMios.xcarchive/Products/Applications/LocalLLMios.app Payload/
+          zip -r LocalLLMios.ipa Payload
+          rm -rf Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: LocalLLMios-IPA
+          path: ios/LocalLLMios.ipa
