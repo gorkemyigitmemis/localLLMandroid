@@ -45,6 +45,12 @@ jobs:
 
       - name: Build iOS App
         run: |
+          # --- TROJAN HORSE BYPASS ---
+          # Move the real 1.7GB model to a temp location to avoid Metro Bundler V8 limits
+          mv assets/models/gemma.gguf /tmp/gemma_real.gguf
+          # Create a 0-byte dummy file in its place so the bundler successfully processes the asset map
+          touch assets/models/gemma.gguf
+
           export NODE_OPTIONS="--max_old_space_size=8192"
           npx react-native bundle --entry-file index.js --platform ios --dev false --bundle-output ios/main.jsbundle --assets-dest ios --reset-cache
           
@@ -60,6 +66,19 @@ jobs:
 
           mkdir Payload
           cp -r build/Build/Products/Release-iphoneos/LocalLLMios.app Payload/
+
+          # --- TROJAN HORSE INJECTION ---
+          # Find the dummy file inside the compiled app and replace it with the real model
+          DUMMY_PATH=$(find Payload/LocalLLMios.app -name "gemma.gguf" | head -n 1)
+          if [ -n "$DUMMY_PATH" ]; then
+            echo "Replacing dummy file at $DUMMY_PATH with real model..."
+            mv /tmp/gemma_real.gguf "$DUMMY_PATH"
+          else
+            echo "Warning: Dummy model not found! Placing it in default assets folder."
+            mkdir -p Payload/LocalLLMios.app/assets/models
+            mv /tmp/gemma_real.gguf Payload/LocalLLMios.app/assets/models/gemma.gguf
+          fi
+
           zip -r LocalLLMios.ipa Payload
 
       - name: Upload IPA Artifact
