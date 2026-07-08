@@ -63,5 +63,9 @@
 	<string>Uygulamaya sesli komut verebilmeniz için mikrofona erişim gereklidir.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Sesinizi yazıya dökebilmek için Apple Ses Tanıma servisi kullanılacaktır.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Görüntüleri analiz edebilmemiz için kameranıza erişim gereklidir.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Görüntüleri analiz edebilmemiz için fotoğraf galerinize erişim gereklidir.</string>
 </dict>
 </plist>

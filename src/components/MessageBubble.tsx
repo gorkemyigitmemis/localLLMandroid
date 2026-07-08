@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, useColorScheme } from 'react-native';
 import Tts from 'react-native-tts';
 
 export interface Message {
@@ -13,6 +13,9 @@ interface Props {
 }
 
 export const MessageBubble: React.FC<Props> = ({ message }) => {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   const handleSpeech = () => {
     try {
       const cleanText = message.text.replace(/🔍.*?(\n|$)/g, '').replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '$1').trim();
@@ -56,7 +59,7 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
     }
 
     return (
-      <Text style={[styles.text, isUser ? styles.userText : styles.botText]}>
+      <Text style={[styles.text, isUser ? styles.userText : (isDark ? styles.botTextDark : styles.botText)]}>
         {parts}
       </Text>
     );
@@ -64,12 +67,15 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
 
   return (
     <View style={[styles.container, message.isUser ? styles.userContainer : styles.botContainer]}>
-      <View style={[styles.bubble, message.isUser ? styles.userBubble : styles.botBubble]}>
+      <View style={[
+        styles.bubble, 
+        message.isUser ? styles.userBubble : (isDark ? styles.botBubbleDark : styles.botBubble)
+      ]}>
         {renderText(message.text, message.isUser)}
         
         {!message.isUser && message.text.length > 0 && !message.text.includes('Düşünüyor...') && !message.text.includes('İnternette aranıyor') && (
-          <TouchableOpacity onPress={handleSpeech} style={styles.ttsButton}>
-            <Text style={styles.ttsText}>🔊 Sesli Oku</Text>
+          <TouchableOpacity onPress={handleSpeech} style={[styles.ttsButton, isDark && styles.ttsButtonDark]}>
+            <Text style={[styles.ttsText, isDark && styles.ttsTextDark]}>🔊 Sesli Oku</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -101,7 +107,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   userBubble: {
-    backgroundColor: '#007AFF', // iMessage Blue
+    backgroundColor: '#0A84FF', // iMessage Blue
     borderBottomRightRadius: 4,
   },
   botBubble: {
@@ -109,6 +115,12 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
     borderWidth: 1,
     borderColor: '#E5E5EA',
+  },
+  botBubbleDark: {
+    backgroundColor: '#1C1C1E',
+    borderBottomLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: '#2C2C2E',
   },
   text: {
     fontSize: 16,
@@ -120,6 +132,9 @@ const styles = StyleSheet.create({
   botText: {
     color: '#1C1C1E',
   },
+  botTextDark: {
+    color: '#F2F2F7',
+  },
   ttsButton: {
     marginTop: 10,
     alignSelf: 'flex-start',
@@ -128,19 +143,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 12,
   },
+  ttsButtonDark: {
+    backgroundColor: '#2C2C2E',
+  },
   ttsText: {
     fontSize: 13,
     color: '#007AFF',
     fontWeight: '600',
+  },
+  ttsTextDark: {
+    color: '#0A84FF',
   },
   linkText: {
     textDecorationLine: 'underline',
     fontWeight: '600',
   },
   userLinkText: {
-    color: '#FFFFFF', // keep it white/visible on blue background
+    color: '#FFFFFF',
   },
   botLinkText: {
-    color: '#007AFF', // Standard iOS blue link color
+    color: '#007AFF',
   },
 });

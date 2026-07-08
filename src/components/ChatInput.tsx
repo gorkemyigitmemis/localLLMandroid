@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator, useColorScheme } from 'react-native';
 import Voice, { SpeechResultsEvent, SpeechErrorEvent } from '@react-native-community/voice';
+import { launchImageLibrary } from 'react-native-image-picker';
+import TextRecognition from 'react-native-text-recognition';
 
 interface Props {
   onSend: (text: string) => void;
@@ -10,6 +12,10 @@ interface Props {
 export const ChatInput: React.FC<Props> = ({ onSend, disabled }) => {
   const [text, setText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   useEffect(() => {
     Voice.onSpeechResults = onSpeechResults;
@@ -53,6 +59,27 @@ export const ChatInput: React.FC<Props> = ({ onSend, disabled }) => {
     }
   };
 
+  const handleImagePick = async () => {
+    const result = await launchImageLibrary({ mediaType: 'photo' });
+    if (result.assets && result.assets.length > 0) {
+      const uri = result.assets[0].uri;
+      if (uri) {
+        setIsAnalyzing(true);
+        try {
+          const recognizedText = await TextRecognition.recognize(uri);
+          if (recognizedText && recognizedText.length > 0) {
+            const combinedText = recognizedText.join(' ');
+            setText((prev) => prev + (prev.length > 0 ? '\n' : '') + `[FOTOĞRAF METNİ: ${combinedText}]`);
+          }
+        } catch (err) {
+          console.error("OCR Error", err);
+        } finally {
+          setIsAnalyzing(false);
+        }
+      }
+    }
+  };
+
   const handleSend = () => {
     if (text.trim() && !disabled) {
       if (isRecording) {
@@ -67,24 +94,38 @@ export const ChatInput: React.FC<Props> = ({ onSend, disabled }) => {
   const isTyping = text.trim().length > 0;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && styles.containerDark]}>
       <TextInput
-        style={styles.input}
+        style={[styles.input, isDark && styles.inputDark]}
         value={text}
         onChangeText={setText}
         placeholder={isRecording ? "Dinleniyor..." : "Mesaj yazın..."}
+        placeholderTextColor={isDark ? "#8E8E93" : "#C7C7CC"}
         multiline
         editable={!disabled}
       />
       
       {!isTyping ? (
-        <TouchableOpacity
-          style={[styles.micButton, isRecording && styles.micButtonActive]}
-          onPress={toggleRecording}
-          disabled={disabled}
-        >
-          <Text style={styles.micIcon}>{isRecording ? '⏹️' : '🎤'}</Text>
-        </TouchableOpacity>
+        <View style={styles.actionButtonsRow}>
+          <TouchableOpacity
+            style={[styles.micButton, isDark && styles.micButtonDark]}
+            onPress={handleImagePick}
+            disabled={disabled || isAnalyzing}
+          >
+            {isAnalyzing ? (
+              <ActivityIndicator size="small" color={isDark ? "#0A84FF" : "#007AFF"} />
+            ) : (
+              <Text style={styles.micIcon}>📸</Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.micButton, isDark && styles.micButtonDark, isRecording && styles.micButtonActive]}
+            onPress={toggleRecording}
+            disabled={disabled}
+          >
+            <Text style={styles.micIcon}>{isRecording ? '⏹️' : '🎤'}</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <TouchableOpacity
           style={[styles.button, disabled && styles.buttonDisabled]}
@@ -107,6 +148,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#F6F6F6',
     alignItems: 'flex-end',
   },
+  containerDark: {
+    backgroundColor: '#1C1C1E',
+    borderColor: '#2C2C2E',
+  },
   input: {
     flex: 1,
     minHeight: 40,
@@ -119,6 +164,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 1,
     borderColor: '#E5E5EA',
+    color: '#000000',
+  },
+  inputDark: {
+    backgroundColor: '#2C2C2E',
+    borderColor: '#3A3A3C',
+    color: '#FFFFFF',
   },
   button: {
     marginLeft: 10,
@@ -138,6 +189,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   micButton: {
     marginLeft: 10,
     marginBottom: 5,
@@ -147,6 +202,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  micButtonDark: {
+    backgroundColor: '#2C2C2E',
   },
   micButtonActive: {
     backgroundColor: '#FF3B30',

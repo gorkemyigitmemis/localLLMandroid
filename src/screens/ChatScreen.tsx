@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Text, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Text, ActivityIndicator, TouchableOpacity, Alert, useColorScheme } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from '@react-native-community/blur';
 import { initLlama, LlamaContext } from 'llama.rn';
 import DocumentPicker from 'react-native-document-picker';
 import RNFS from 'react-native-fs';
@@ -20,6 +21,9 @@ export const ChatScreen: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [llamaContext, setLlamaContext] = useState<LlamaContext | null>(null);
   
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   const flatListRef = useRef<FlatList>(null);
 
   const SYSTEM_PROMPT = `Sen 'Aisistan' adında gelişmiş bir yapay zeka asistanısın.
@@ -272,34 +276,34 @@ Aisistan: [SEARCH: site:akakce.com Samsung S24 fiyat]`;
 
   if (!isModelLoaded) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, isDark && styles.loadingContainerDark]}>
         {isModelLoading ? (
-          <View style={styles.glassCard}>
+          <BlurView style={styles.glassCard} blurType={isDark ? "dark" : "light"} blurAmount={10}>
             <ActivityIndicator size="large" color="#0A84FF" />
-            <Text style={styles.loadingText}>{loadingText}</Text>
-          </View>
+            <Text style={[styles.loadingText, isDark && styles.loadingTextDark]}>{loadingText}</Text>
+          </BlurView>
         ) : (
-          <View style={styles.glassCard}>
-            <Text style={styles.welcomeTitle}>Antigravity AI</Text>
-            <Text style={styles.subText}>Cihazınızda çalışan, çevrimdışı ve gizlilik odaklı süper asistanınıza hoş geldiniz.</Text>
+          <BlurView style={styles.glassCard} blurType={isDark ? "dark" : "light"} blurAmount={15}>
+            <Text style={[styles.welcomeTitle, isDark && styles.welcomeTitleDark]}>Aisistan</Text>
+            <Text style={[styles.subText, isDark && styles.subTextDark]}>Cihazınızda çalışan, çevrimdışı ve gizlilik odaklı süper asistanınıza hoş geldiniz.</Text>
             <TouchableOpacity style={styles.premiumButton} onPress={handleSelectModel}>
               <Text style={styles.premiumButtonText}>GGUF Modeli Yükle</Text>
             </TouchableOpacity>
-          </View>
+          </BlurView>
         )}
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.safeArea, isDark && styles.safeAreaDark]} edges={['top', 'bottom']}>
       <KeyboardAvoidingView 
         style={styles.container} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
       >
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Aisistan</Text>
+        <View style={[styles.header, isDark && styles.headerDark]}>
+          <Text style={[styles.headerTitle, isDark && styles.headerTitleDark]}>Aisistan</Text>
           <TouchableOpacity onPress={clearHistory} style={styles.clearButton}>
             <Text style={styles.clearButtonText}>🗑️ Temizle</Text>
           </TouchableOpacity>
@@ -323,76 +327,99 @@ Aisistan: [SEARCH: site:akakce.com Samsung S24 fiyat]`;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F2F2F7', // iOS background
+    backgroundColor: '#F2F2F7',
+  },
+  safeAreaDark: {
+    backgroundColor: '#000000',
   },
   container: {
     flex: 1,
   },
   header: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+    backgroundColor: 'rgba(242, 242, 247, 0.9)',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: 'rgba(242, 242, 247, 0.9)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  headerDark: {
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderBottomColor: '#2C2C2E',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: '#1C1C1E',
   },
+  headerTitleDark: {
+    color: '#F2F2F7',
+  },
   clearButton: {
-    padding: 8,
-    backgroundColor: '#FF3B3015',
-    borderRadius: 20,
+    padding: 6,
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    borderRadius: 8,
   },
   clearButtonText: {
-    fontSize: 14,
     color: '#FF3B30',
+    fontSize: 14,
     fontWeight: '600',
   },
   listContent: {
-    paddingVertical: 15,
-    paddingHorizontal: 5,
+    paddingBottom: 20,
+    paddingTop: 10,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000000', // Modern Dark background
+    backgroundColor: '#EFEFEF', 
+  },
+  loadingContainerDark: {
+    backgroundColor: '#000000',
   },
   glassCard: {
     width: '85%',
     padding: 30,
     borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255,255,255,0.3)',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   welcomeTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#1C1C1E',
     marginBottom: 15,
     letterSpacing: 0.5,
   },
+  welcomeTitleDark: {
+    color: '#FFFFFF',
+  },
   subText: {
     fontSize: 15,
-    color: '#EBEBF590',
+    color: '#3A3A3C',
     textAlign: 'center',
     marginBottom: 30,
     lineHeight: 22,
+  },
+  subTextDark: {
+    color: '#EBEBF590',
   },
   loadingText: {
     marginTop: 20,
     fontSize: 15,
     fontWeight: '500',
-    color: '#FFFFFF',
+    color: '#1C1C1E',
     textAlign: 'center',
     lineHeight: 22,
+  },
+  loadingTextDark: {
+    color: '#FFFFFF',
   },
   premiumButton: {
     backgroundColor: '#0A84FF',
