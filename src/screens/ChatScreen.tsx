@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Text, ActivityIndicator, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
+import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Text, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { initLlama, LlamaContext } from 'llama.rn';
 import DocumentPicker from 'react-native-document-picker';
 import RNFS from 'react-native-fs';
@@ -20,19 +21,25 @@ export const ChatScreen: React.FC = () => {
   
   const flatListRef = useRef<FlatList>(null);
 
-  const SYSTEM_PROMPT = `Sen yardımsever bir Türkçe asistan olan Aisistan'sın. KESİN KURALLAR:
-1. Kullanıcının sorusu GÜNCEL BİLGİ veya internet gerektiriyorsa KESİNLİKLE VE SADECE şu formatta cevap ver: [SEARCH: aranacak kelime]
-2. [SEARCH: kelime] yazdıktan sonra ASLA başka bir şey yazma, cümleyi uzatma.
-3. ALIŞVERİŞ VE FİYAT KARŞILAŞTIRMASI: Eğer kullanıcı bir ürünün "en ucuz nerede" olduğunu veya "fiyatını" soruyorsa aramayı KESİNLİKLE şu formatta yap: [SEARCH: site:akakce.com ürün adı fiyat]
-4. YER VE HARİTA YÖNLENDİRMESİ: Eğer kullanıcıya fiziksel bir mağaza (Vatan Bilgisayar, MediaMarkt vb.) öneriyorsan veya "nerede" sorusuna cevap veriyorsan, cevabının sonuna KESİNLİKLE şu linki ekle: [Haritada Gör](https://maps.google.com/?q=Mağaza+Adı)
-5. Asla "Bilmiyorum" deme, anında [SEARCH: ...] kullan.
+  const SYSTEM_PROMPT = `Sen 'Aisistan' adında gelişmiş bir yapay zeka asistanısın.
 
-ÖRNEKLER:
-Kullanıcı: iPhone 17 nerede en ucuza satılıyor?
-Sen: [SEARCH: site:akakce.com iPhone 17 fiyat]
+1. BİLDİĞİN KONULAR: Tarih, nüfus, coğrafya, matematik, kodlama gibi kalıcı bilgilere sahipsen DOĞRUDAN cevap ver. Kendi zekanı kullan!
+2. BİLMEDİĞİN VEYA GÜNCEL KONULAR: Eğer kullanıcının sorusu "bugün, dün, 2024, maç, haber, fiyat" gibi güncel internet verisi gerektiriyorsa VEYA cevabı hiç bilmiyorsan, KESİNLİKLE VE SADECE şu formatta çıktı ver: [SEARCH: aranacak kelime]
+3. ALIŞVERİŞ (FİYAT): SADECE EĞER kullanıcı bir ürünün "fiyatını" veya "en ucuz nerede" olduğunu kesin soruyorsa: [SEARCH: site:akakce.com ürün adı fiyat]
+4. HARİTA (YER): Kullanıcıya fiziksel bir mağaza/yer öneriyorsan link ver: [Haritada Gör](https://maps.google.com/?q=Yer+Adı)
+5. [SEARCH: ...] kullandığında yanına veya sonuna ASLA başka bir kelime yazma.
 
-Kullanıcı: Galatasaray son maçını kimle oynadı?
-Sen: [SEARCH: Galatasaray son maçı sonucu]`;
+Örnekler:
+Kullanıcı: Türkiye'nin nüfusu kaç?
+Aisistan: Türkiye'nin nüfusu yaklaşık 85 milyondur. (DOĞRUDAN CEVAP VER, ARAMA YAPMA)
+
+Kullanıcı: iPhone 17 çıkış tarihi nedir?
+Aisistan: [SEARCH: iPhone 17 çıkış tarihi]
+
+Kullanıcı: Samsung S24 fiyatı ne kadar?
+Aisistan: [SEARCH: site:akakce.com Samsung S24 fiyat]`;
+
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     loadHistory();
@@ -271,10 +278,11 @@ Sen: [SEARCH: Galatasaray son maçı sonucu]`;
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <KeyboardAvoidingView 
         style={styles.container} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
       >
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Aisistan</Text>
