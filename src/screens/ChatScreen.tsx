@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Text, ActivityIndicator, TouchableOpacity, Alert, useColorScheme } from 'react-native';
+import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Text, ActivityIndicator, TouchableOpacity, Alert, useColorScheme, Linking } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from '@react-native-community/blur';
 import { initLlama, LlamaContext } from 'llama.rn';
@@ -36,12 +36,16 @@ GÜNCEL VERİ VE BİLGİ İHTİYACINDA AŞAĞIDAKİ ARAÇLARI (TOOLS) KULLAN:
 2. SİTE OKUMAK İÇİN: Eğer detaylı bir metin, haber, wikipedia okuman gerekiyorsa veya arama sonucundaki bir siteye girip içeriğini kazıman gerekiyorsa şu JSON'u döndür:
 {"action": "read_site", "url": "https://..."}
 
+3. TELEFON YÖNETİMİ İÇİN (SYSTEM INTENT): Eğer kullanıcı birini aramak, mesaj atmak, web sitesi açmak veya telefonun bir yerel özelliğini kullanmak istiyorsa şu formatta çıktı ver:
+{"action": "intent", "url": "sms:1234567890"} veya {"action": "intent", "url": "tel:1234567890"} veya {"action": "intent", "url": "https://..."}
+
 KURALLAR:
 1. JSON döndürdüğünde başka HİÇBİR metin yazma.
 2. Eğer araçlardan gelen veriyi aldıysan DOĞRUDAN doğal dille Türkçe cevap ver.
 3. Fiyat soruluyorsa: {"action": "search", "query": "cimri ürün adı fiyat"}
 4. Hava durumu soruluyorsa: {"action": "search", "query": "Şehir Adı 20 Temmuz hava durumu derece"}
 5. Harita önermek için markdown link kullan: [Haritada Gör](https://maps.google.com/?q=Yer+Adı)
+6. Fotoğraf Analizi (Vision): Eğer sana bir [RESİM] tagi veya base64 verisi gelirse, o görseli dikkatlice inceleyip detaylı cevap ver.
 
 Örnekler:
 Kullanıcı: Türkiye'nin nüfusu kaç?
@@ -264,6 +268,31 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
                 { role: 'System', text: `[${actionData.url}] sitesinden senin için çekilen en ilgili metinler:\n\n${relevantChunk}\n\nBu metinleri okuyup analiz ederek kullanıcıya Markdown formatında şık ve detaylı bir cevap ver.` }
               ];
               continue; // Ajan döngüye devam etsin
+            }
+            else if (actionData.action === 'intent' && actionData.url) {
+              setMessages((prevMessages) =>
+                prevMessages.map((msg) =>
+                  msg.id === botMessageId
+                    ? { ...msg, text: `📱 Sistem komutu çalıştırılıyor: ${actionData.url}...\n` }
+                    : msg
+                )
+              );
+              
+              try {
+                await Linking.openURL(actionData.url);
+                currentHistory = [
+                  ...currentHistory,
+                  { role: 'Assistant', text: stepResponse },
+                  { role: 'System', text: `Sistem komutu (${actionData.url}) başarıyla telefonda çalıştırıldı. Kullanıcıya işlemin yapıldığını söyle.` }
+                ];
+              } catch (err) {
+                currentHistory = [
+                  ...currentHistory,
+                  { role: 'Assistant', text: stepResponse },
+                  { role: 'System', text: `HATA: ${actionData.url} komutu telefonda çalıştırılamadı. Kullanıcıya bunu bildir.` }
+                ];
+              }
+              continue;
             }
           } catch (e) {
             console.warn("JSON parse hatası, doğal dil olarak kabul ediliyor.");
