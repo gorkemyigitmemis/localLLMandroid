@@ -258,11 +258,11 @@ const styles = StyleSheet.create({
   },
 });
 
-const markdownStyles = {
+const markdownStyles = StyleSheet.create({
   body: { color: '#F8FAFC', fontSize: 15, lineHeight: 22 },
   heading1: { color: '#38BDF8', marginTop: 10 },
   heading2: { color: '#38BDF8', marginTop: 8 },
   code_inline: { backgroundColor: 'rgba(255,255,255,0.1)', fontFamily: 'Courier' },
   code_block: { backgroundColor: '#000', color: '#10B981', fontFamily: 'Courier' },
   link: { color: '#38BDF8', textDecorationLine: 'underline' }
-};
+});
