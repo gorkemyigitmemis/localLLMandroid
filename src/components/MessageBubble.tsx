@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, useColorScheme } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import Tts from 'react-native-tts';
+import Markdown from 'react-native-markdown-display';
 
 export interface Message {
   id: string;
@@ -27,41 +28,22 @@ export const MessageBubble = React.memo<Props>(({ message }) => {
     }
   };
 
-  const renderText = (text: string, isUser: boolean) => {
-    const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
-    const parts = [];
-    let lastIndex = 0;
-    let match;
-
-    while ((match = linkRegex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push(text.substring(lastIndex, match.index));
-      }
-      
-      const linkText = match[1];
-      const linkUrl = match[2];
-      
-      parts.push(
-        <Text 
-          key={match.index} 
-          style={[styles.text, styles.linkText, isUser ? styles.userLinkText : styles.botLinkText]} 
-          onPress={() => Linking.openURL(linkUrl)}
-        >
-          {linkText}
+  const renderContent = (text: string, isUser: boolean) => {
+    if (isUser || text.includes('🔍')) {
+      return (
+        <Text style={[styles.text, isUser ? styles.userText : (isDark ? styles.botTextDark : styles.botText)]}>
+          {text}
         </Text>
       );
-      
-      lastIndex = linkRegex.lastIndex;
     }
-
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
-    }
-
+    
+    // For bot, render proper markdown
     return (
-      <Text style={[styles.text, isUser ? styles.userText : (isDark ? styles.botTextDark : styles.botText)]}>
-        {parts}
-      </Text>
+      <Markdown 
+        style={isDark ? markdownStylesDark : markdownStylesLight}
+      >
+        {text}
+      </Markdown>
     );
   };
 
@@ -71,7 +53,7 @@ export const MessageBubble = React.memo<Props>(({ message }) => {
         styles.bubble, 
         message.isUser ? styles.userBubble : (isDark ? styles.botBubbleDark : styles.botBubble)
       ]}>
-        {renderText(message.text, message.isUser)}
+        {renderContent(message.text, message.isUser)}
         
         {!message.isUser && message.text.length > 0 && !message.text.includes('Düşünüyor...') && !message.text.includes('İnternette aranıyor') && (
           <TouchableOpacity onPress={handleSpeech} style={[styles.ttsButton, isDark && styles.ttsButtonDark]}>
@@ -165,5 +147,56 @@ const styles = StyleSheet.create({
   },
   botLinkText: {
     color: '#007AFF',
+  },
+});
+
+const baseMarkdown = {
+  body: {
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  code_inline: {
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    padding: 4,
+    borderRadius: 4,
+    fontFamily: 'Courier',
+  },
+  code_block: {
+    backgroundColor: '#1C1C1E',
+    padding: 10,
+    borderRadius: 8,
+    color: '#F8FAFC',
+    fontFamily: 'Courier',
+    marginVertical: 10,
+  },
+};
+
+const markdownStylesLight = StyleSheet.create({
+  ...baseMarkdown,
+  body: {
+    ...baseMarkdown.body,
+    color: '#1C1C1E',
+  },
+  link: {
+    color: '#007AFF',
+    textDecorationLine: 'underline',
+  },
+});
+
+const markdownStylesDark = StyleSheet.create({
+  ...baseMarkdown,
+  body: {
+    ...baseMarkdown.body,
+    color: '#F8FAFC',
+  },
+  link: {
+    color: '#38BDF8',
+    textDecorationLine: 'underline',
+  },
+  code_inline: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    padding: 4,
+    borderRadius: 4,
+    fontFamily: 'Courier',
   },
 });

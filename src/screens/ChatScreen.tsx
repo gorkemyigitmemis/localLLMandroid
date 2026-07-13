@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MessageBubble, Message } from '../components/MessageBubble';
 import { ChatInput } from '../components/ChatInput';
 import { performWebSearch } from '../utils/searchEngine';
+import { scrapeWebsite, chunkAndRetrieve } from '../utils/ragAgent';
 import Tts from 'react-native-tts';
 
 export const ChatScreen: React.FC = () => {
@@ -28,23 +29,29 @@ export const ChatScreen: React.FC = () => {
 
   const SYSTEM_PROMPT = `Sen 'Aisistan' adında gelişmiş bir yapay zeka asistanısın.
 
-1. BİLDİĞİN KONULAR: Tarih, nüfus, coğrafya, matematik, kodlama gibi kalıcı bilgilere sahipsen DOĞRUDAN cevap ver. Kendi zekanı kullan!
-2. BİLMEDİĞİN VEYA GÜNCEL KONULAR: Eğer kullanıcının sorusu "bugün, dün, 2024, maç, haber, fiyat" gibi güncel internet verisi gerektiriyorsa VEYA cevabı hiç bilmiyorsan, KESİNLİKLE VE SADECE şu formatta çıktı ver: [SEARCH: aranacak kelime]
-3. ALIŞVERİŞ VE FİYAT: SADECE EĞER kullanıcı bir ürünün fiyatını soruyorsa: [SEARCH: cimri ürün adı fiyat] kullan. Gelen sonuçlardaki ucuz fiyatlar (Örn: 500 TL) kılıf veya taksit tutarı olabilir. Eğer asıl telefonun gerçekçi fiyatını bulamıyorsan, kullanıcıya 'Sadece kılıf fiyatları var, asıl fiyat henüz belli değil' şeklinde AÇIKLAMA YAP. Sadece link atıp susma!
-4. HAVA DURUMU: Kullanıcı hava durumunu sorarsa, arama motorunun metinlerde sıcaklık verilerini bulabilmesi için sonuna kesinlikle "derece" ekle. Eğer spesifik bir gün soruluyorsa o günü de ekle: [SEARCH: Şehir Adı 20 Temmuz hava durumu derece] veya [SEARCH: Şehir Adı geçen perşembe hava durumu derece]. Eğer tarih yoksa "bugün" ekle: [SEARCH: Şehir Adı hava durumu bugün derece]
-5. HARİTA (YER): Kullanıcıya fiziksel bir mağaza/yer öneriyorsan link ver: [Haritada Gör](https://maps.google.com/?q=Yer+Adı)
-6. LİNKLER: Arama sonuçlarında sana sağlanan (URL) adreslerini KESİNLİKLE kullanarak tıklanabilir linkler oluştur. Format: [Site Adı](URL)
-7. [SEARCH: ...] kullandığında yanına veya sonuna ASLA başka bir kelime yazma.
+GÜNCEL VERİ VE BİLGİ İHTİYACINDA AŞAĞIDAKİ ARAÇLARI (TOOLS) KULLAN:
+1. ARAMA YAPMAK İÇİN: Eğer kullanıcının sorusu "bugün, 2024, fiyat, hava durumu" gibi güncel veri gerektiriyorsa SADECE şu formatta çıktı ver:
+{"action": "search", "query": "aranacak kelime"}
+
+2. SİTE OKUMAK İÇİN: Eğer detaylı bir metin, haber, wikipedia okuman gerekiyorsa veya arama sonucundaki bir siteye girip içeriğini kazıman gerekiyorsa şu JSON'u döndür:
+{"action": "read_site", "url": "https://..."}
+
+KURALLAR:
+1. JSON döndürdüğünde başka HİÇBİR metin yazma.
+2. Eğer araçlardan gelen veriyi aldıysan DOĞRUDAN doğal dille Türkçe cevap ver.
+3. Fiyat soruluyorsa: {"action": "search", "query": "cimri ürün adı fiyat"}
+4. Hava durumu soruluyorsa: {"action": "search", "query": "Şehir Adı 20 Temmuz hava durumu derece"}
+5. Harita önermek için markdown link kullan: [Haritada Gör](https://maps.google.com/?q=Yer+Adı)
 
 Örnekler:
 Kullanıcı: Türkiye'nin nüfusu kaç?
-Aisistan: Türkiye'nin nüfusu yaklaşık 85 milyondur. (Arama yapma)
+Aisistan: Türkiye'nin nüfusu yaklaşık 85 milyondur.
 
 Kullanıcı: Ankara'da hava nasıl?
-Aisistan: [SEARCH: Ankara hava durumu bugün derece]
+Aisistan: {"action": "search", "query": "Ankara hava durumu bugün derece"}
 
-Kullanıcı: Samsung S24 fiyatı ne kadar?
-Aisistan: [SEARCH: cimri Samsung S24 fiyat]`;
+Kullanıcı: Wikipedia'dan karadelikler sayfasına bakıp özetle.
+Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_delik"}`;
 
   const insets = useSafeAreaInsets();
 
@@ -174,97 +181,101 @@ Aisistan: [SEARCH: cimri Samsung S24 fiyat]`;
   const generateResponse = async (history: {role: string, text: string}[], botMessageId: string) => {
     if (!llamaContext) return;
     
-    let fullResponse = "";
-    let lastUpdate1 = Date.now();
+    let currentHistory = [...history];
+    let finalResponse = "";
+    const userQuery = history[history.length - 1].text;
+
     try {
-      await llamaContext.completion(
-        {
-          prompt: buildPrompt(history),
-          n_predict: 200,
-          temperature: 0.3, 
-        },
-        (data) => {
-          fullResponse += data.token;
-          const now = Date.now();
-          if (now - lastUpdate1 > 80) {
-            setMessages((prevMessages) =>
-              prevMessages.map((msg) =>
-                msg.id === botMessageId
-                  ? { ...msg, text: fullResponse }
-                  : msg
-              )
-            );
-            lastUpdate1 = now;
-          }
-        }
-      );
-      
-      // Ensure final flush
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg.id === botMessageId
-            ? { ...msg, text: fullResponse }
-            : msg
-        )
-      );
-
-      // Arama tag'ini kontrol et
-      const searchMatch = fullResponse.match(/\[SEARCH:\s*(.*?)\]/i);
-      if (searchMatch) {
-        const query = searchMatch[1].trim();
+      for (let step = 0; step < 3; step++) {
+        let stepResponse = "";
+        let lastUpdate = Date.now();
         
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg.id === botMessageId
-              ? { ...msg, text: `🔍 İnternette aranıyor: "${query}"...\n` }
-              : msg
-          )
-        );
-
-        const searchResults = await performWebSearch(query);
-        
-        const newHistory = [
-          ...history,
-          { role: 'Assistant', text: fullResponse },
-          { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nYukarıdaki güncel arama verilerine dayanarak soruyu Türkçe yanıtla. ÖNEMLİ KURALLAR:\n1. Kaynaklarda belirtilen (URL) adreslerini kullanarak [Site Adı](URL) formatında tıklanabilir linkler oluştur.\n2. Fiyat soruluyorsa, arama sonuçlarındaki aşırı ucuz fiyatların (Örn: 500 TL) telefon kılıfı olabileceğini unutma. Eğer asıl ürünün gerçek fiyatını bulamıyorsan, kullanıcıya 'Sadece kılıf/aksesuar fiyatları bulabildim, asıl cihazın fiyatı henüz belli değil veya çıkmamış olabilir' şeklinde SÖZEL BİR AÇIKLAMA YAP. Sadece link atıp susma.\n3. [SEARCH] etiketini tekrar KULLANMA.` }
-        ];
-        
-        let finalResponse = "";
-        let lastUpdate2 = Date.now();
         await llamaContext.completion(
           {
-            prompt: buildPrompt(newHistory),
-            n_predict: 500,
-            temperature: 0.5,
+            prompt: buildPrompt(currentHistory),
+            n_predict: 800,
+            temperature: 0.3, 
           },
           (data) => {
-            finalResponse += data.token;
+            stepResponse += data.token;
             const now = Date.now();
-            if (now - lastUpdate2 > 80) {
+            if (now - lastUpdate > 80) {
               setMessages((prevMessages) =>
                 prevMessages.map((msg) =>
                   msg.id === botMessageId
-                    ? { ...msg, text: `🔍 Aranmış konu: "${query}"\n\n${finalResponse}` }
+                    ? { ...msg, text: stepResponse }
                     : msg
                 )
               );
-              lastUpdate2 = now;
+              lastUpdate = now;
             }
           }
         );
         
+        // Ensure final flush
         setMessages((prevMessages) =>
           prevMessages.map((msg) =>
             msg.id === botMessageId
-              ? { ...msg, text: `🔍 Aranmış konu: "${query}"\n\n${finalResponse}` }
+              ? { ...msg, text: stepResponse }
               : msg
           )
         );
+
+        // JSON aracı kontrolü
+        const jsonMatch = stepResponse.match(/\{[\s\S]*"action"[\s\S]*\}/);
         
-        setConversation([...newHistory, { role: 'Assistant', text: finalResponse }]);
-      } else {
-        setConversation([...history, { role: 'Assistant', text: fullResponse }]);
+        if (jsonMatch) {
+          try {
+            const actionData = JSON.parse(jsonMatch[0]);
+            
+            if (actionData.action === 'search' && actionData.query) {
+              setMessages((prevMessages) =>
+                prevMessages.map((msg) =>
+                  msg.id === botMessageId
+                    ? { ...msg, text: `🔍 İnternette aranıyor: "${actionData.query}"...\n` }
+                    : msg
+                )
+              );
+
+              const searchResults = await performWebSearch(actionData.query);
+              
+              currentHistory = [
+                ...currentHistory,
+                { role: 'Assistant', text: stepResponse },
+                { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nYukarıdaki güncel arama verilerine dayanarak soruyu Türkçe yanıtla. ÖNEMLİ KURALLAR:\n1. Kaynaklarda belirtilen (URL) adreslerini kullanarak tıklanabilir linkler oluştur.\n2. Fiyat soruluyorsa, arama sonuçlarındaki aşırı ucuz fiyatların telefon kılıfı olabileceğini unutma.\n3. Gerekliyse {"action": "read_site", "url": "..."} aracıyla bir siteyi kazı.` }
+              ];
+              continue; // Ajan döngüye devam etsin
+            } 
+            else if (actionData.action === 'read_site' && actionData.url) {
+              setMessages((prevMessages) =>
+                prevMessages.map((msg) =>
+                  msg.id === botMessageId
+                    ? { ...msg, text: `📖 Site okunuyor: ${actionData.url}...\n` }
+                    : msg
+                )
+              );
+
+              const rawText = await scrapeWebsite(actionData.url);
+              const relevantChunk = chunkAndRetrieve(rawText, userQuery, 3); // Zero-RAM RAG
+
+              currentHistory = [
+                ...currentHistory,
+                { role: 'Assistant', text: stepResponse },
+                { role: 'System', text: `[${actionData.url}] sitesinden senin için çekilen en ilgili metinler:\n\n${relevantChunk}\n\nBu metinleri okuyup analiz ederek kullanıcıya Markdown formatında şık ve detaylı bir cevap ver.` }
+              ];
+              continue; // Ajan döngüye devam etsin
+            }
+          } catch (e) {
+            console.warn("JSON parse hatası, doğal dil olarak kabul ediliyor.");
+          }
+        }
+
+        // Eğer JSON yoksa veya araç kullanılmadıysa, bu final cevaptır.
+        finalResponse = stepResponse;
+        break;
       }
+      
+      setConversation([...currentHistory, { role: 'Assistant', text: finalResponse }]);
 
     } catch (error) {
       console.error("LLaMA completion error:", error);
