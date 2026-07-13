@@ -1,7 +1,5 @@
-import * as cheerio from 'cheerio';
-
 /**
- * Scrapes a website and extracts its raw text content.
+ * Scrapes a website and extracts its raw text content without Node.js dependencies.
  */
 export async function scrapeWebsite(url: string): Promise<string> {
   try {
@@ -15,20 +13,30 @@ export async function scrapeWebsite(url: string): Promise<string> {
       throw new Error(`Failed to fetch: ${response.status}`);
     }
 
-    const html = await response.text();
-    const $ = cheerio.load(html);
+    let html = await response.text();
+    
+    // 1. Remove scripts, styles, and SVG tags completely
+    html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ');
+    html = html.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ');
+    html = html.replace(/<svg\b[^<]*(?:(?!<\/svg>)<[^<]*)*<\/svg>/gi, ' ');
+    html = html.replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, ' ');
+    html = html.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, ' ');
+    
+    // 2. Strip all remaining HTML tags
+    let extractedText = html.replace(/<[^>]+>/g, ' ');
+    
+    // 3. Decode common HTML entities
+    extractedText = extractedText
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&apos;/g, "'");
 
-    // Remove unwanted elements
-    $('script, style, noscript, iframe, img, svg, nav, footer, header').remove();
-
-    // Extract text from paragraphs and headings
-    let extractedText = '';
-    $('h1, h2, h3, p, li').each((_, el) => {
-      const text = $(el).text().trim();
-      if (text.length > 20) {
-        extractedText += text + '\n\n';
-      }
-    });
+    // 4. Clean up whitespace (remove excessive newlines and spaces)
+    extractedText = extractedText.replace(/\s{3,}/g, '\n\n').trim();
 
     return extractedText;
   } catch (error) {
