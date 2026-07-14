@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Text, ActivityIndicator, TouchableOpacity, Alert, useColorScheme, Linking } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from '@react-native-community/blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useHeaderHeight } from '@react-navigation/elements';
@@ -60,7 +60,6 @@ Aisistan: {"action": "search", "query": "Ankara hava durumu bugün derece"}
 Kullanıcı: Wikipedia'dan karadelikler sayfasına bakıp özetle.
 Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_delik"}`;
 
-  const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
 
   useEffect(() => {

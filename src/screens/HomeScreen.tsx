@@ -1,11 +1,11 @@
 import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableWithoutFeedback, Animated, useColorScheme, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, TouchableWithoutFeedback, Animated } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import DocumentPicker from 'react-native-document-picker';
 import RNFS from 'react-native-fs';
-import { loadGlobalModel, getGlobalLlamaContext } from '../utils/llamaManager';
+import { loadGlobalModel } from '../utils/llamaManager';
 import { ActivityIndicator, Alert } from 'react-native';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;

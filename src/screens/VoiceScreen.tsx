@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Voice from '@react-native-community/voice';
 import Tts from 'react-native-tts';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getGlobalLlamaContext } from '../utils/llamaManager';
 
 export const VoiceScreen: React.FC = () => {
