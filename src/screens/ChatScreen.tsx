@@ -32,7 +32,7 @@ export const ChatScreen: React.FC = () => {
   const SYSTEM_PROMPT = `Sen 'Aisistan' adında gelişmiş bir yapay zeka asistanısın.
 
 GÜNCEL VERİ VE BİLGİ İHTİYACINDA AŞAĞIDAKİ ARAÇLARI (TOOLS) KULLAN:
-1. ARAMA YAPMAK İÇİN: Eğer kullanıcının sorusu "bugün, 2024, fiyat, hava durumu" gibi güncel veri gerektiriyorsa SADECE şu formatta çıktı ver:
+1. ARAMA YAPMAK İÇİN: Eğer kullanıcının sorusu "bugün, 2024, fiyat, hava durumu, özellik, telefon, model, kimdir, nedir" gibi internette arama gerektiren güncel veya spesifik bir veri gerektiriyorsa SADECE şu formatta çıktı ver:
 {"action": "search", "query": "aranacak kelime"}
 
 2. SİTE OKUMAK İÇİN: Eğer detaylı bir metin, haber, wikipedia okuman gerekiyorsa veya arama sonucundaki bir siteye girip içeriğini kazıman gerekiyorsa şu JSON'u döndür:
@@ -420,8 +420,8 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
         <KeyboardAvoidingView 
           style={styles.container} 
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 20}
         >
           <View style={[styles.header, isDark && styles.headerDark]}>
             <BlurView style={StyleSheet.absoluteFill} blurType={isDark ? "dark" : "light"} blurAmount={20} />

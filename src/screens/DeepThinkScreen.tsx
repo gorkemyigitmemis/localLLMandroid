@@ -8,6 +8,7 @@ import { scrapeWebsite, chunkAndRetrieve } from '../utils/ragAgent';
 import { saveToMemory, searchMemory } from '../utils/localMemory';
 import notifee, { AndroidImportance } from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DocumentPicker from 'react-native-document-picker';
 
 export const DeepThinkScreen: React.FC = () => {
   const [query, setQuery] = useState('');
@@ -42,11 +43,41 @@ export const DeepThinkScreen: React.FC = () => {
           n_ctx: 2048,
         });
         setLlamaContext(context);
-      } else {
-        Alert.alert('Model Bulunamadı', 'Lütfen önce Klasik Sohbet ekranından bir model yükleyin.');
       }
     } catch (e) {
       console.warn("Model yüklenemedi", e);
+    }
+  };
+
+  const handleSelectModel = async () => {
+    try {
+      const res = await DocumentPicker.pickSingle({
+        type: [DocumentPicker.types.allFiles],
+      });
+
+      if (!res.name?.endsWith('.gguf')) {
+        Alert.alert('Geçersiz Dosya', 'Lütfen .gguf uzantılı bir model dosyası seçin.');
+        return;
+      }
+
+      const destPath = `${RNFS.DocumentDirectoryPath}/${res.name}`;
+      const exists = await RNFS.exists(destPath);
+      if (exists) {
+        await RNFS.unlink(destPath);
+      }
+
+      await RNFS.copyFile(res.uri, destPath);
+      
+      const context = await initLlama({
+        model: destPath,
+        use_mlock: true,
+        n_ctx: 2048,
+      });
+      setLlamaContext(context);
+    } catch (err) {
+      if (!DocumentPicker.isCancel(err)) {
+        console.error(err);
+      }
     }
   };
 
@@ -195,6 +226,15 @@ export const DeepThinkScreen: React.FC = () => {
     <View style={styles.container}>
       <Text style={styles.header}>Otonom Ajan Paneli</Text>
       
+      {!llamaContext && (
+        <View style={styles.modelContainer}>
+          <Text style={styles.modelText}>Model yüklü değil. GGUF modeli seçin:</Text>
+          <TouchableOpacity style={styles.modelButton} onPress={handleSelectModel}>
+            <Text style={styles.modelButtonText}>GGUF Modeli Yükle</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -246,6 +286,26 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 16,
+  },
+  modelContainer: {
+    backgroundColor: '#1E293B',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  modelText: {
+    color: '#94A3B8',
+    marginBottom: 12,
+  },
+  modelButton: {
+    backgroundColor: '#0A84FF',
+    padding: 12,
+    borderRadius: 8,
+  },
+  modelButtonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
   },
   inputContainer: {
     flexDirection: 'row',
