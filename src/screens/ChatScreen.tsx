@@ -146,27 +146,32 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
         let stepResponse = "";
         let lastUpdate = Date.now();
         
-        await llamaContext.completion(
-          {
-            prompt: buildPrompt(currentHistory),
-            n_predict: 800,
-            temperature: 0.3, 
-          },
-          (data) => {
-            stepResponse += data.token;
-            const now = Date.now();
-            if (now - lastUpdate > 80) {
-              setMessages((prevMessages) =>
-                prevMessages.map((msg) =>
-                  msg.id === botMessageId
-                    ? { ...msg, text: stepResponse }
-                    : msg
-                )
-              );
-              lastUpdate = now;
+        try {
+          await llamaContext.completion(
+            {
+              prompt: buildPrompt(currentHistory),
+              n_predict: 800,
+              temperature: 0.3, 
+            },
+            (data) => {
+              stepResponse += data.token;
+              const now = Date.now();
+              if (now - lastUpdate > 80) {
+                setMessages((prevMessages) =>
+                  prevMessages.map((msg) =>
+                    msg.id === botMessageId
+                      ? { ...msg, text: stepResponse }
+                      : msg
+                  )
+                );
+                lastUpdate = now;
+              }
             }
-          }
-        );
+          );
+        } catch (compErr) {
+          console.warn("LLM generation interrupted:", compErr);
+          stepResponse += "\n\n[Sistem: Bellek/Token sınırına ulaşıldı. Lütfen daha kısa sorular sorun veya sohbeti temizleyin.]";
+        }
         
         // Ensure final flush
         setMessages((prevMessages) =>

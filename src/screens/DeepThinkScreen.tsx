@@ -81,16 +81,21 @@ ${persona ? `KULLANICI ÇEKİRDEK HAFIZASI:\n${persona}` : ''}`;
         addLog(`Adım ${step}: Model analiz yapıyor...`);
         let stepResponse = "";
         
-        await llamaContext.completion(
-          {
-            prompt: buildPrompt(currentHistory),
-            n_predict: 800,
-            temperature: 0.2, 
-          },
-          (data) => {
-            stepResponse += data.token;
-          }
-        );
+        try {
+          await llamaContext.completion(
+            {
+              prompt: buildPrompt(currentHistory),
+              n_predict: 800,
+              temperature: 0.2, 
+            },
+            (data) => {
+              stepResponse += data.token;
+            }
+          );
+        } catch (compErr) {
+          console.warn("LLM generation interrupted:", compErr);
+          stepResponse += "\n[Sistem Uyarı: Modelin işlem hafızası doldu, yanıt yarıda kesildi.]";
+        }
 
         const jsonMatch = stepResponse.match(/\{[^{}]*"action"[^{}]*\}/);
         
