@@ -5,6 +5,8 @@ import RNFS from 'react-native-fs';
 import { initLlama, LlamaContext } from 'llama.rn';
 import { performWebSearch } from '../utils/searchEngine';
 import { scrapeWebsite, chunkAndRetrieve } from '../utils/ragAgent';
+import { saveToMemory, searchMemory } from '../utils/localMemory';
+import notifee, { AndroidImportance } from '@notifee/react-native';
 
 export const DeepThinkScreen: React.FC = () => {
   const [query, setQuery] = useState('');
@@ -60,7 +62,7 @@ export const DeepThinkScreen: React.FC = () => {
     addLog('Derin düşünme protokolü başlatıldı...');
     
     let currentHistory = [
-      { role: 'System', text: 'Sen Otonom bir Araştırmacı Ajansın. Kullanıcının verdiği devasa görevi başarmak için arama (search) ve okuma (read_site) araçlarını arka arkaya defalarca kullanabilirsin. İşin tamamen bittiğinde SONUÇ: diyerek nihai markdown raporunu yaz.' },
+      { role: 'System', text: 'Sen Otonom bir Araştırmacı Ajansın. Kullanıcının verdiği devasa görevi başarmak için arama (search), okuma (read_site) ve hafıza tarama (search_memory) araçlarını arka arkaya defalarca kullanabilirsin. İşin tamamen bittiğinde SONUÇ: diyerek nihai markdown raporunu yaz.' },
       { role: 'user', text: query }
     ];
 
@@ -90,8 +92,18 @@ export const DeepThinkScreen: React.FC = () => {
             const actionData = JSON.parse(jsonMatch[0]);
             
             if (actionData.action === 'search' && actionData.query) {
-              addLog(`Araç tetiklendi: Web Arama -> "${actionData.query}"`);
-              const searchResults = await performWebSearch(actionData.query);
+              // Smart Query Pre-processing
+              let finalQuery = actionData.query;
+              const lowerQ = finalQuery.toLowerCase();
+              if (lowerQ.includes('fiyat') || lowerQ.includes('kaç tl')) {
+                finalQuery += ' site:cimri.com OR site:akakce.com';
+              }
+              if (lowerQ.includes('hava') || lowerQ.includes('bugün')) {
+                finalQuery += ` ${new Date().toLocaleDateString('tr-TR')}`;
+              }
+
+              addLog(`Araç tetiklendi: Web Arama -> "${finalQuery}"`);
+              const searchResults = await performWebSearch(finalQuery);
               addLog(`Arama sonuçları başarıyla çekildi. (${searchResults.length} karakter)`);
               
               currentHistory.push({ role: 'Assistant', text: stepResponse });
@@ -102,10 +114,23 @@ export const DeepThinkScreen: React.FC = () => {
               addLog(`Araç tetiklendi: Site Kazıma -> "${actionData.url}"`);
               const rawText = await scrapeWebsite(actionData.url);
               const relevantChunk = chunkAndRetrieve(rawText, query, 3);
-              addLog(`Siteden en uygun veri parçaları koparıldı. (${relevantChunk.length} karakter)`);
+              
+              // Hafızaya (SSD) kaydet
+              await saveToMemory(actionData.url, relevantChunk);
+
+              addLog(`Siteden en uygun veri parçaları koparıldı ve diske kaydedildi. (${relevantChunk.length} karakter)`);
 
               currentHistory.push({ role: 'Assistant', text: stepResponse });
               currentHistory.push({ role: 'System', text: `[${actionData.url}] içerik özeti:\n${relevantChunk}\n\nEğer araştırma bittiyse raporunu hazırla.` });
+              continue;
+            }
+            else if (actionData.action === 'search_memory' && actionData.query) {
+              addLog(`Araç tetiklendi: SSD Yerel Hafıza Tarama -> "${actionData.query}"`);
+              const memoryResults = await searchMemory(actionData.query);
+              addLog(`Hafıza taraması bitti.`);
+              
+              currentHistory.push({ role: 'Assistant', text: stepResponse });
+              currentHistory.push({ role: 'System', text: `Yerel SSD hafızasından gelen sonuçlar:\n${memoryResults}\n\nEğer araştırma bittiyse raporunu hazırla.` });
               continue;
             }
           } catch (e) {
@@ -121,6 +146,26 @@ export const DeepThinkScreen: React.FC = () => {
       
       setFinalReport(finalResponse);
       addLog('Protokol başarıyla sonlandırıldı.');
+      
+      // Send Push Notification
+      try {
+        await notifee.requestPermission();
+        const channelId = await notifee.createChannel({
+          id: 'aisistan_tasks',
+          name: 'Derin Düşünme Görevleri',
+          importance: AndroidImportance.HIGH,
+        });
+
+        await notifee.displayNotification({
+          title: 'Aisistan: Araştırma Tamamlandı 🚀',
+          body: 'Derin düşünme protokolü bitti. Raporunu okumak için uygulamaya dön!',
+          android: {
+            channelId,
+          },
+        });
+      } catch (e) {
+        console.warn("Bildirim gönderilemedi", e);
+      }
 
     } catch (e) {
       console.warn("LLM error", e);

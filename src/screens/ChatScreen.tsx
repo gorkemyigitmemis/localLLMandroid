@@ -10,6 +10,7 @@ import { MessageBubble, Message } from '../components/MessageBubble';
 import { ChatInput } from '../components/ChatInput';
 import { performWebSearch } from '../utils/searchEngine';
 import { scrapeWebsite, chunkAndRetrieve } from '../utils/ragAgent';
+import { saveToMemory, searchMemory } from '../utils/localMemory';
 import Tts from 'react-native-tts';
 
 export const ChatScreen: React.FC = () => {
@@ -38,6 +39,9 @@ GÜNCEL VERİ VE BİLGİ İHTİYACINDA AŞAĞIDAKİ ARAÇLARI (TOOLS) KULLAN:
 
 3. TELEFON YÖNETİMİ İÇİN (SYSTEM INTENT): Eğer kullanıcı birini aramak, mesaj atmak, web sitesi açmak veya telefonun bir yerel özelliğini kullanmak istiyorsa şu formatta çıktı ver:
 {"action": "intent", "url": "sms:1234567890"} veya {"action": "intent", "url": "tel:1234567890"} veya {"action": "intent", "url": "https://..."}
+
+4. GEÇMİŞİ VE YEREL HAFIZAYI TARAMAK İÇİN: Kullanıcı geçmişte öğrettiği bir bilgiyi, okuttuğu bir siteyi veya pdf'i sorarsa yerel hafızanı (SSD) taramak için şu komutu ver:
+{"action": "search_memory", "query": "aranacak kelime"}
 
 KURALLAR:
 1. JSON döndürdüğünde başka HİÇBİR metin yazma.
@@ -233,15 +237,25 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
             const actionData = JSON.parse(jsonMatch[0]);
             
             if (actionData.action === 'search' && actionData.query) {
+              // Smart Query Pre-processing
+              let finalQuery = actionData.query;
+              const lowerQ = finalQuery.toLowerCase();
+              if (lowerQ.includes('fiyat') || lowerQ.includes('kaç tl') || lowerQ.includes('ne kadar')) {
+                finalQuery += ' site:cimri.com OR site:akakce.com';
+              }
+              if (lowerQ.includes('hava') || lowerQ.includes('bugün') || lowerQ.includes('şimdi')) {
+                finalQuery += ` ${new Date().toLocaleDateString('tr-TR')}`;
+              }
+
               setMessages((prevMessages) =>
                 prevMessages.map((msg) =>
                   msg.id === botMessageId
-                    ? { ...msg, text: `🔍 İnternette aranıyor: "${actionData.query}"...\n` }
+                    ? { ...msg, text: `🔍 İnternette aranıyor: "${finalQuery}"...\n` }
                     : msg
                 )
               );
 
-              const searchResults = await performWebSearch(actionData.query);
+              const searchResults = await performWebSearch(finalQuery);
               
               currentHistory = [
                 ...currentHistory,
@@ -261,6 +275,9 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
 
               const rawText = await scrapeWebsite(actionData.url);
               const relevantChunk = chunkAndRetrieve(rawText, userQuery, 3); // Zero-RAM RAG
+              
+              // Hafızaya (SSD) kaydet
+              await saveToMemory(actionData.url, relevantChunk);
 
               currentHistory = [
                 ...currentHistory,
@@ -268,6 +285,24 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
                 { role: 'System', text: `[${actionData.url}] sitesinden senin için çekilen en ilgili metinler:\n\n${relevantChunk}\n\nBu metinleri okuyup analiz ederek kullanıcıya Markdown formatında şık ve detaylı bir cevap ver.` }
               ];
               continue; // Ajan döngüye devam etsin
+            }
+            else if (actionData.action === 'search_memory' && actionData.query) {
+              setMessages((prevMessages) =>
+                prevMessages.map((msg) =>
+                  msg.id === botMessageId
+                    ? { ...msg, text: `🧠 Yerel hafıza taranıyor: "${actionData.query}"...\n` }
+                    : msg
+                )
+              );
+
+              const memoryResults = await searchMemory(actionData.query);
+              
+              currentHistory = [
+                ...currentHistory,
+                { role: 'Assistant', text: stepResponse },
+                { role: 'System', text: `Yerel SSD hafızasından gelen sonuçlar:\n${memoryResults}\n\nEğer yeterliyse kullanıcıya cevap ver.` }
+              ];
+              continue;
             }
             else if (actionData.action === 'intent' && actionData.url) {
               setMessages((prevMessages) =>
