@@ -55,8 +55,17 @@ Aisistan: Türkiye'nin nüfusu yaklaşık 85 milyondur.
 Kullanıcı: Ankara'da hava nasıl?
 Aisistan: {"action": "search", "query": "Ankara hava durumu bugün derece"}
 
+Kullanıcı: iPhone 17 Pro Max özellikleri neler?
+Aisistan: {"action": "search", "query": "iPhone 17 Pro Max teknik özellikler işlemci kamera ekran batarya"}
+
+Kullanıcı: Samsung Galaxy S25 özellikleri?
+Aisistan: {"action": "search", "query": "Samsung Galaxy S25 Ultra teknik özellikler"}
+
 Kullanıcı: Wikipedia'dan karadelikler sayfasına bakıp özetle.
-Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_delik"}`;
+Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_delik"}
+
+Kullanıcı: RTX 5090 özellikler?
+Aisistan: {"action": "search", "query": "RTX 5090 teknik özellikler VRAM performans"}`;
 
   const headerHeight = useHeaderHeight();
 
@@ -168,9 +177,21 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
               }
             }
           );
-        } catch (compErr) {
-          console.warn("LLM generation interrupted:", compErr);
-          stepResponse += "\n\n[Sistem: Bellek/Token sınırına ulaşıldı. Lütfen daha kısa sorular sorun veya sohbeti temizleyin.]";
+        } catch (compErr: any) {
+          // Only show the memory warning if nothing useful was generated.
+          // Some llama.rn builds throw on successful completion — ignore those.
+          const errMsg = String(compErr?.message || compErr || '');
+          const isRealCrash = errMsg.includes('context') || errMsg.includes('kv') || errMsg.includes('OOM') || errMsg.includes('alloc');
+          if (isRealCrash || stepResponse.trim().length === 0) {
+            console.warn("LLM generation interrupted:", compErr);
+            if (stepResponse.trim().length > 0) {
+              // We have partial content — append a small note
+              stepResponse += "\n\n_(Cevap kesilebilir — konuşmayı temizleyip tekrar deneyin.)_";
+            } else {
+              stepResponse = "Cevap üretilirken bir sorun oluştu. Sohbeti temizleyip tekrar deneyin.";
+            }
+          }
+          // else: normal llama.rn completion signal, stepResponse is fine
         }
         
         // Ensure final flush

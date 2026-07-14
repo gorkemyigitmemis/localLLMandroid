@@ -92,9 +92,13 @@ ${persona ? `KULLANICI ÇEKİRDEK HAFIZASI:\n${persona}` : ''}`;
               stepResponse += data.token;
             }
           );
-        } catch (compErr) {
-          console.warn("LLM generation interrupted:", compErr);
-          stepResponse += "\n[Sistem Uyarı: Modelin işlem hafızası doldu, yanıt yarıda kesildi.]";
+        } catch (compErr: any) {
+          const errMsg = String(compErr?.message || compErr || '');
+          const isRealCrash = errMsg.includes('context') || errMsg.includes('kv') || errMsg.includes('OOM') || errMsg.includes('alloc');
+          if (isRealCrash || stepResponse.trim().length === 0) {
+            console.warn("LLM generation interrupted:", compErr);
+            stepResponse += "\n[Sistem Uyarı: İşlem yarıda kesildi, sohbeti temizleyip deneyin.]";
+          }
         }
 
         const jsonMatch = stepResponse.match(/\{[^{}]*"action"[^{}]*\}/);
