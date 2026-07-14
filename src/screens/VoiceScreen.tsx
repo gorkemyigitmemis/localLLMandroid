@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Alert } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Voice from '@react-native-community/voice';
 import Tts from 'react-native-tts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -100,20 +101,30 @@ export const VoiceScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Telsiz Modu</Text>
-      
-      <View style={styles.centerBox}>
-        <Text style={styles.transcript}>{transcript}</Text>
+      <View style={StyleSheet.absoluteFill}>
+        <View style={[styles.gradientCircle, styles.circle1]} />
+        <View style={[styles.gradientCircle, styles.circle2]} />
+        <BlurView style={StyleSheet.absoluteFill} blurType="dark" blurAmount={30} />
       </View>
 
-      <TouchableOpacity 
-        style={styles.micButtonContainer} 
-        onPress={toggleListening}
-      >
-        <Animated.View style={[styles.micButton, { transform: [{ scale: pulseAnim }] }]}>
-          <Text style={styles.micIcon}>{isListening ? '🛑' : '🎙️'}</Text>
-        </Animated.View>
-      </TouchableOpacity>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Telsiz Modu</Text>
+        </View>
+        
+        <View style={styles.centerBox}>
+          <Text style={styles.transcript}>{transcript || "Bir şeyler söyle..."}</Text>
+        </View>
+
+        <TouchableOpacity 
+          style={styles.micButtonContainer} 
+          onPress={toggleListening}
+        >
+          <Animated.View style={[styles.micButton, { transform: [{ scale: pulseAnim }] }]}>
+            <Text style={styles.micIcon}>{isListening ? '🛑' : '🎙️'}</Text>
+          </Animated.View>
+        </TouchableOpacity>
+      </SafeAreaView>
     </View>
   );
 };
@@ -121,15 +132,38 @@ export const VoiceScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#050B14',
+  },
+  safeArea: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 60,
+  },
+  gradientCircle: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.3,
+  },
+  circle1: {
+    top: '10%',
+    left: -100,
+    backgroundColor: '#0284C7',
+  },
+  circle2: {
+    bottom: '20%',
+    right: -100,
+    backgroundColor: '#8B5CF6',
+  },
+  header: {
+    marginTop: 20,
   },
   title: {
     color: '#F8FAFC',
     fontSize: 24,
     fontWeight: 'bold',
+    letterSpacing: 1,
   },
   centerBox: {
     flex: 1,
@@ -148,17 +182,21 @@ const styles = StyleSheet.create({
     marginTop: '50%',
   },
   micButtonContainer: {
-    marginBottom: 40,
+    marginBottom: 60,
   },
   micButton: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#1E293B',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#38BDF8',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    shadowColor: '#38BDF8',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
   },
   micIcon: {
     fontSize: 40,

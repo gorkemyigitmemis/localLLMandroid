@@ -3,6 +3,7 @@ import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Text, Activ
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from '@react-native-community/blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { getGlobalLlamaContext } from '../utils/llamaManager';
 import { MessageBubble, Message } from '../components/MessageBubble';
 import { ChatInput } from '../components/ChatInput';
@@ -60,6 +61,7 @@ Kullanıcı: Wikipedia'dan karadelikler sayfasına bakıp özetle.
 Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_delik"}`;
 
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
 
   useEffect(() => {
     loadHistory();
@@ -340,7 +342,7 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
         <KeyboardAvoidingView 
           style={styles.container} 
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight : 0}
         >
           <View style={[styles.header, isDark && styles.headerDark]}>
             <BlurView style={StyleSheet.absoluteFill} blurType={isDark ? "dark" : "light"} blurAmount={20} />
