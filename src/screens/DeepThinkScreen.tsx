@@ -159,7 +159,7 @@ ${persona ? `KULLANICI ÇEKİRDEK HAFIZASI:\n${persona}` : ''}`;
               addLog(`Arama sonuçları başarıyla çekildi. (${searchResults.length} karakter)`);
               
               currentHistory.push({ role: 'Assistant', text: stepResponse });
-              currentHistory.push({ role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Eğer sonuçlarda yeterli bilgi VARSA, bunları BİZZAT KENDİN RAPORLA.\n2. Eğer bilgi YETERSİZSE, linkteki detayları okumak ZORUNDASIN. Siteyi okumak için SADECE şu formatta JSON döndür:\n{"action": "read_site", "url": "girmek_istediğin_link"}\n\nDİKKAT: Kullanıcıya asla link verip geçme!` });
+              currentHistory.push({ role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Eğer sonuçlarda yeterli bilgi VARSA, bunları BİZZAT KENDİN RAPORLA.\n2. Eğer bilgi YETERSİZSE, "bilmiyorum" veya "erişimim yok" demek KESİNLİKLE YASAKTIR! Linkteki detayları okumak ZORUNDASIN. Siteyi okumak için SADECE şu formatta JSON döndür:\n{"action": "read_site", "url": "girmek_istediğin_link"}\n\nDİKKAT: Kullanıcıya asla link verip geçme!` });
               continue;
             } 
             else if (actionData.action === 'read_site' && actionData.url) {

@@ -45,6 +45,7 @@ KURALLAR:
 2. BİLGİ BULDUKTAN SONRA: "Şu siteden bakabilirsiniz" DEME. TÜM BİLGİLERİ (özellikler, sayılar, fiyatlar) BİZZAT KENDİN MADDELER HALİNDE YAZ.
 3. "Çok güçlü", "harika" gibi yuvarlak kelimeler kullanma. NET SAYI VE TEKNİK TERİM kullan (48 MP, 4500 mAh, 3.2 GHz gibi).
 4. Harita için: [Haritada Gör](https://maps.google.com/?q=Yer+Adı)
+5. "Bilmiyorum", "Erişimim kısıtlı" veya "Yardımcı olamam" demek KESİNLİKLE YASAKTIR. Bilgiyi bulana kadar arama ve site okuma (JSON) araçlarını kullanacaksın.
 
 --- ÖRÜNTÜLER (Bu örneklere BIREBIR göre davran) ---
 
@@ -270,7 +271,7 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
               currentHistory = [
                 ...currentHistory,
                 { role: 'Assistant', text: stepResponse },
-                { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Eğer sonuçlarda yeterli bilgi VARSA, bunları BİZZAT KENDİN MADDELER HALİNDE YAZ.\n2. Eğer bilgi YETERSİZSE, SADECE şu formatta JSON döndür:\n{"action": "read_site", "url": "girmek_istediğin_link"}\n\nDİKKAT:\nCihaz veya araç özelliği listeliyorsan TÜRÜNE GÖRE ŞU FORMATLARI KULLAN:\n[TELEFON]: Ekran, İşlemci, Batarya, Kamera\n[ARABA]: Motor, Güç, Tork, Kapasite, 0-100\n[DİĞER CİHAZLAR]: En önemli 5 teknik veri.\nFiyatı da en alta ekle.` }
+                { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Eğer sonuçlarda yeterli bilgi VARSA, bunları BİZZAT KENDİN MADDELER HALİNDE YAZ.\n2. Eğer bilgi YETERSİZSE, "bilmiyorum" veya "erişimim yok" demek KESİNLİKLE YASAKTIR! Bunun yerine SADECE şu formatta JSON döndürüp siteye girmelisin:\n{"action": "read_site", "url": "girmek_istediğin_link"}\n\nDİKKAT:\nCihaz veya araç özelliği listeliyorsan TÜRÜNE GÖRE ŞU FORMATLARI KULLAN:\n[TELEFON]: Ekran, İşlemci, Batarya, Kamera\n[ARABA]: Motor, Güç, Tork, Kapasite, 0-100\n[DİĞER CİHAZLAR]: En önemli 5 teknik veri.\nFiyatı da en alta ekle.` }
               ];
               continue; // Ajan döngüye devam etsin
             } 
