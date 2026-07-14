@@ -170,7 +170,7 @@ ${persona ? `KULLANICI ÇEKİRDEK HAFIZASI:\n${persona}` : ''}`;
               if (/(özellik|telefon|araba|kamera|batarya|ekran|işlemci|motor|fiyat)/i.test(query)) {
                   ragQuery += " işlemci batarya ekran kamera ram tork beygir güç kapasite mah mp hz çözünürlük";
               }
-              const relevantChunk = chunkAndRetrieve(rawText, ragQuery, 8); // Safe with 4096 context window
+              const relevantChunk = chunkAndRetrieve(rawText, ragQuery, 4); // Reduced to 4 for fast mobile processing
               
               // Hafızaya (SSD) kaydet
               await saveToMemory(actionData.url, relevantChunk);
