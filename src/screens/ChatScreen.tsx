@@ -188,7 +188,9 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
               // Smart Query Pre-processing
               let finalQuery = actionData.query;
               const lowerQ = finalQuery.toLowerCase();
-              if (lowerQ.includes('fiyat') || lowerQ.includes('kaç tl') || lowerQ.includes('ne kadar')) {
+              if (lowerQ.includes('uçak') || lowerQ.includes('otobüs') || lowerQ.includes('bilet')) {
+                finalQuery += ' site:obilet.com OR site:enuygun.com OR site:turna.com';
+              } else if (lowerQ.includes('fiyat') || lowerQ.includes('kaç tl') || lowerQ.includes('ne kadar')) {
                 finalQuery += ' site:cimri.com OR site:akakce.com';
               }
               if (lowerQ.includes('hava') || lowerQ.includes('bugün') || lowerQ.includes('şimdi')) {
