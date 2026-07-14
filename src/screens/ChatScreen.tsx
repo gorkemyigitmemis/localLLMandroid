@@ -2,10 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Text, ActivityIndicator, TouchableOpacity, Alert, useColorScheme, Linking } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from '@react-native-community/blur';
-import { initLlama, LlamaContext } from 'llama.rn';
-import DocumentPicker from 'react-native-document-picker';
-import RNFS from 'react-native-fs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getGlobalLlamaContext } from '../utils/llamaManager';
 import { MessageBubble, Message } from '../components/MessageBubble';
 import { ChatInput } from '../components/ChatInput';
 import { performWebSearch } from '../utils/searchEngine';
@@ -18,11 +16,8 @@ export const ChatScreen: React.FC = () => {
   const [conversation, setConversation] = useState<{role: string, text: string}[]>([]);
   const [persona, setPersona] = useState('');
   
-  const [isModelLoaded, setIsModelLoaded] = useState(false);
-  const [isModelLoading, setIsModelLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [llamaContext, setLlamaContext] = useState<LlamaContext | null>(null);
+  const llamaContext = getGlobalLlamaContext();
   
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -80,13 +75,7 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
     } catch (e) {
       console.warn("TTS initialization error", e);
     }
-    
-    return () => {
-      if (llamaContext) {
-        llamaContext.release();
-      }
-    };
-  }, [llamaContext]);
+  }, []);
 
   // Geçmişi kaydetme
   useEffect(() => {
@@ -124,56 +113,6 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
         await AsyncStorage.removeItem('@conversation');
       }}
     ]);
-  };
-
-  const loadModel = async (modelPath: string) => {
-    try {
-      setLoadingText('Model belleğe alınıyor...\n(Gemma 2B)');
-      const context = await initLlama({
-        model: modelPath,
-        use_mlock: true,
-        n_ctx: 2048,
-        n_gpu_layers: 1,
-      });
-      setLlamaContext(context);
-      setIsModelLoaded(true);
-    } catch (error) {
-      console.warn("Model yüklenemedi:", error);
-      Alert.alert("Hata", "Model belleğe alınırken bir hata oluştu.");
-    } finally {
-      setIsModelLoading(false);
-    }
-  };
-
-  const handleSelectModel = async () => {
-    try {
-      const res = await DocumentPicker.pickSingle({
-        type: [DocumentPicker.types.allFiles],
-      });
-
-      if (!res.name?.endsWith('.gguf')) {
-        Alert.alert('Geçersiz Dosya', 'Lütfen .gguf uzantılı bir model dosyası seçin.');
-        return;
-      }
-
-      setIsModelLoading(true);
-      setLoadingText('Ağırlıklar Kopyalanıyor\n(Bu işlem biraz sürebilir)...');
-
-      const destPath = `${RNFS.DocumentDirectoryPath}/${res.name}`;
-      const exists = await RNFS.exists(destPath);
-      if (exists) {
-        await RNFS.unlink(destPath);
-      }
-
-      await RNFS.copyFile(res.uri, destPath);
-      await loadModel(destPath);
-    } catch (err) {
-      if (!DocumentPicker.isCancel(err)) {
-        console.error(err);
-        Alert.alert('Hata', 'Dosya seçilirken bir hata oluştu.');
-      }
-      setIsModelLoading(false);
-    }
   };
 
   const buildPrompt = (history: {role: string, text: string}[]) => {
@@ -386,29 +325,6 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
     await generateResponse(currentHistory, botMessageId);
     setIsStreaming(false);
   };
-
-  if (!isModelLoaded) {
-    return (
-      <View style={[styles.loadingContainer, isDark && styles.loadingContainerDark]}>
-        {isModelLoading ? (
-          <View style={styles.glassCard}>
-            <BlurView style={StyleSheet.absoluteFill} blurType={isDark ? "dark" : "light"} blurAmount={25} />
-            <ActivityIndicator size="large" color="#0A84FF" />
-            <Text style={[styles.loadingText, isDark && styles.loadingTextDark]}>{loadingText}</Text>
-          </View>
-        ) : (
-          <View style={styles.glassCard}>
-            <BlurView style={StyleSheet.absoluteFill} blurType={isDark ? "dark" : "light"} blurAmount={25} />
-            <Text style={[styles.welcomeTitle, isDark && styles.welcomeTitleDark]}>Aisistan</Text>
-            <Text style={[styles.subText, isDark && styles.subTextDark]}>Cihazınızda çalışan, çevrimdışı ve gizlilik odaklı süper asistanınıza hoş geldiniz.</Text>
-            <TouchableOpacity style={styles.premiumButton} onPress={handleSelectModel}>
-              <Text style={styles.premiumButtonText}>GGUF Modeli Yükle</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    );
-  }
 
   return (
     <View style={[styles.safeArea, isDark && styles.safeAreaDark]}>

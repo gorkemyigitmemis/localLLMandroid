@@ -3,6 +3,10 @@ import { View, Text, StyleSheet, TouchableWithoutFeedback, Animated, useColorSch
 import { BlurView } from '@react-native-community/blur';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
+import DocumentPicker from 'react-native-document-picker';
+import RNFS from 'react-native-fs';
+import { loadGlobalModel, getGlobalLlamaContext } from '../utils/llamaManager';
+import { ActivityIndicator, Alert } from 'react-native';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -72,6 +76,51 @@ const AnimatedCard = ({ title, desc, icon, onPress, delay = 0 }: any) => {
 };
 
 export const HomeScreen: React.FC<Props> = ({ navigation }) => {
+  const [isLoaded, setIsLoaded] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const init = async () => {
+      const ctx = await loadGlobalModel();
+      if (ctx) setIsLoaded(true);
+      setIsLoading(false);
+    };
+    init();
+  }, []);
+
+  const handleSelectModel = async () => {
+    try {
+      const res = await DocumentPicker.pickSingle({
+        type: [DocumentPicker.types.allFiles],
+      });
+
+      if (!res.name?.endsWith('.gguf')) {
+        Alert.alert('Geçersiz Dosya', 'Lütfen .gguf uzantılı bir model dosyası seçin.');
+        return;
+      }
+
+      setIsLoading(true);
+
+      const destPath = `${RNFS.DocumentDirectoryPath}/${res.name}`;
+      const exists = await RNFS.exists(destPath);
+      if (exists) {
+        await RNFS.unlink(destPath);
+      }
+
+      await RNFS.copyFile(res.uri, destPath);
+      
+      const ctx = await loadGlobalModel(destPath);
+      if (ctx) setIsLoaded(true);
+      
+    } catch (err) {
+      if (!DocumentPicker.isCancel(err)) {
+        console.error(err);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.backgroundGradients}>
@@ -81,7 +130,25 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
       
       <BlurView style={styles.absoluteBlur} blurType="dark" blurAmount={30} />
 
-      <View style={styles.content}>
+      {!isLoaded ? (
+        <View style={styles.content}>
+          <Text style={styles.title}>Aisistan OS</Text>
+          <Text style={styles.subtitle}>Sistemi başlatmak için çekirdek yapay zeka modelini (.gguf) yükleyin.</Text>
+          
+          <View style={styles.barrierContainer}>
+            {isLoading ? (
+              <ActivityIndicator size="large" color="#0A84FF" />
+            ) : (
+              <TouchableWithoutFeedback onPress={handleSelectModel}>
+                <View style={styles.uploadButton}>
+                  <Text style={styles.uploadButtonText}>GGUF Modeli Seç ve Yükle</Text>
+                </View>
+              </TouchableWithoutFeedback>
+            )}
+          </View>
+        </View>
+      ) : (
+        <View style={styles.content}>
         <Text style={styles.title}>Aisistan OS</Text>
         <Text style={styles.subtitle}>Otonom Zeka & Yerel Hafıza</Text>
 
@@ -116,6 +183,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
           />
         </View>
       </View>
+      )}
     </View>
   );
 };
@@ -148,6 +216,26 @@ const styles = StyleSheet.create({
   },
   absoluteBlur: {
     ...StyleSheet.absoluteFill,
+  },
+  barrierContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  uploadButton: {
+    backgroundColor: '#0A84FF',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 100,
+    shadowColor: '#0A84FF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  uploadButtonText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   content: {
     flex: 1,

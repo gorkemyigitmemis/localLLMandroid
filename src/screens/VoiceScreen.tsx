@@ -3,16 +3,13 @@ import { View, Text, StyleSheet, TouchableOpacity, Animated, Alert } from 'react
 import { BlurView } from '@react-native-community/blur';
 import Voice from '@react-native-community/voice';
 import Tts from 'react-native-tts';
-import { initLlama, LlamaContext } from 'llama.rn';
-import RNFS from 'react-native-fs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import DocumentPicker from 'react-native-document-picker';
+import { getGlobalLlamaContext } from '../utils/llamaManager';
 
 export const VoiceScreen: React.FC = () => {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
-  const [isModelLoaded, setIsModelLoaded] = useState(false);
-  const [llamaContext, setLlamaContext] = useState<LlamaContext | null>(null);
+  const llamaContext = getGlobalLlamaContext();
   
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -36,71 +33,10 @@ export const VoiceScreen: React.FC = () => {
       setIsListening(false);
     };
 
-    loadSavedModel();
-
     return () => {
       Voice.destroy().then(Voice.removeAllListeners);
-      if (llamaContext) {
-        llamaContext.release();
-      }
     };
   }, []);
-
-  const loadSavedModel = async () => {
-    try {
-      // Find any gguf file in the document directory
-      const files = await RNFS.readDir(RNFS.DocumentDirectoryPath);
-      const ggufFile = files.find(f => f.name.endsWith('.gguf'));
-      if (ggufFile) {
-        const context = await initLlama({
-          model: ggufFile.path,
-          use_mlock: true,
-          n_ctx: 1024,
-        });
-        setLlamaContext(context);
-        setIsModelLoaded(true);
-      }
-    } catch (e) {
-      console.warn("Model yüklenemedi", e);
-    }
-  };
-
-  const handleSelectModel = async () => {
-    try {
-      const res = await DocumentPicker.pickSingle({
-        type: [DocumentPicker.types.allFiles],
-      });
-
-      if (!res.name?.endsWith('.gguf')) {
-        Alert.alert('Geçersiz Dosya', 'Lütfen .gguf uzantılı bir model dosyası seçin.');
-        return;
-      }
-
-      setTranscript('Model Kopyalanıyor...');
-
-      const destPath = `${RNFS.DocumentDirectoryPath}/${res.name}`;
-      const exists = await RNFS.exists(destPath);
-      if (exists) {
-        await RNFS.unlink(destPath);
-      }
-
-      await RNFS.copyFile(res.uri, destPath);
-      
-      const context = await initLlama({
-        model: destPath,
-        use_mlock: true,
-        n_ctx: 1024,
-      });
-      setLlamaContext(context);
-      setIsModelLoaded(true);
-      setTranscript('');
-    } catch (err) {
-      if (!DocumentPicker.isCancel(err)) {
-        console.error(err);
-      }
-      setTranscript('Hata oluştu.');
-    }
-  };
 
   const handleProcessSpeech = async (text: string) => {
     if (!llamaContext) return;
@@ -151,15 +87,12 @@ export const VoiceScreen: React.FC = () => {
     ).start();
   };
 
-  if (!isModelLoaded) {
+  if (!llamaContext) {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Telsiz Modu</Text>
         <View style={styles.centerBox}>
-          <Text style={styles.statusText}>Lütfen bir yapay zeka modeli (.gguf) seçin.</Text>
-          <TouchableOpacity style={styles.modelButton} onPress={handleSelectModel}>
-            <Text style={styles.modelButtonText}>GGUF Modeli Yükle</Text>
-          </TouchableOpacity>
+          <Text style={styles.statusText}>Sistem Hatası: Yapay Zeka Belleği Bulunamadı.</Text>
         </View>
       </View>
     );
@@ -229,17 +162,5 @@ const styles = StyleSheet.create({
   },
   micIcon: {
     fontSize: 40,
-  },
-  modelButton: {
-    backgroundColor: '#0A84FF',
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  modelButtonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 16,
   },
 });

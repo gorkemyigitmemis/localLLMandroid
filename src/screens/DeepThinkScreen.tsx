@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import Markdown from 'react-native-markdown-display';
-import RNFS from 'react-native-fs';
-import { initLlama, LlamaContext } from 'llama.rn';
 import { performWebSearch } from '../utils/searchEngine';
 import { scrapeWebsite, chunkAndRetrieve } from '../utils/ragAgent';
 import { saveToMemory, searchMemory } from '../utils/localMemory';
 import notifee, { AndroidImportance } from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import DocumentPicker from 'react-native-document-picker';
+import { getGlobalLlamaContext } from '../utils/llamaManager';
 
 export const DeepThinkScreen: React.FC = () => {
   const [query, setQuery] = useState('');
@@ -17,69 +15,20 @@ export const DeepThinkScreen: React.FC = () => {
   const [finalReport, setFinalReport] = useState<string | null>(null);
   const [persona, setPersona] = useState('');
   
-  const [llamaContext, setLlamaContext] = useState<LlamaContext | null>(null);
+  const llamaContext = getGlobalLlamaContext();
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
-    loadSavedModel();
-    return () => {
-      if (llamaContext) {
-        llamaContext.release();
+    const loadPersona = async () => {
+      try {
+        const savedPersona = await AsyncStorage.getItem('@user_persona');
+        if (savedPersona) setPersona(savedPersona);
+      } catch (e) {
+        console.warn("Persona yüklenemedi", e);
       }
     };
+    loadPersona();
   }, []);
-
-  const loadSavedModel = async () => {
-    try {
-      const savedPersona = await AsyncStorage.getItem('@user_persona');
-      if (savedPersona) setPersona(savedPersona);
-
-      const files = await RNFS.readDir(RNFS.DocumentDirectoryPath);
-      const ggufFile = files.find(f => f.name.endsWith('.gguf'));
-      if (ggufFile) {
-        const context = await initLlama({
-          model: ggufFile.path,
-          use_mlock: true,
-          n_ctx: 2048,
-        });
-        setLlamaContext(context);
-      }
-    } catch (e) {
-      console.warn("Model yüklenemedi", e);
-    }
-  };
-
-  const handleSelectModel = async () => {
-    try {
-      const res = await DocumentPicker.pickSingle({
-        type: [DocumentPicker.types.allFiles],
-      });
-
-      if (!res.name?.endsWith('.gguf')) {
-        Alert.alert('Geçersiz Dosya', 'Lütfen .gguf uzantılı bir model dosyası seçin.');
-        return;
-      }
-
-      const destPath = `${RNFS.DocumentDirectoryPath}/${res.name}`;
-      const exists = await RNFS.exists(destPath);
-      if (exists) {
-        await RNFS.unlink(destPath);
-      }
-
-      await RNFS.copyFile(res.uri, destPath);
-      
-      const context = await initLlama({
-        model: destPath,
-        use_mlock: true,
-        n_ctx: 2048,
-      });
-      setLlamaContext(context);
-    } catch (err) {
-      if (!DocumentPicker.isCancel(err)) {
-        console.error(err);
-      }
-    }
-  };
 
   const addLog = (log: string) => {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${log}`]);
@@ -225,15 +174,6 @@ export const DeepThinkScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Otonom Ajan Paneli</Text>
-      
-      {!llamaContext && (
-        <View style={styles.modelContainer}>
-          <Text style={styles.modelText}>Model yüklü değil. GGUF modeli seçin:</Text>
-          <TouchableOpacity style={styles.modelButton} onPress={handleSelectModel}>
-            <Text style={styles.modelButtonText}>GGUF Modeli Yükle</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       <View style={styles.inputContainer}>
         <TextInput
@@ -286,26 +226,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 16,
-  },
-  modelContainer: {
-    backgroundColor: '#1E293B',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  modelText: {
-    color: '#94A3B8',
-    marginBottom: 12,
-  },
-  modelButton: {
-    backgroundColor: '#0A84FF',
-    padding: 12,
-    borderRadius: 8,
-  },
-  modelButtonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
   },
   inputContainer: {
     flexDirection: 'row',
