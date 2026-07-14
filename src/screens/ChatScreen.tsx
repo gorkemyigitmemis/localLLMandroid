@@ -270,7 +270,7 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
               currentHistory = [
                 ...currentHistory,
                 { role: 'Assistant', text: stepResponse },
-                { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Eğer sonuçlarda yeterli bilgi (örneğin teknik özellikler, fiyat) VARSA, bunları BİZZAT KENDİN MADDELER HALİNDE YAZ.\n2. Eğer sonuçlardaki bilgi YETERSİZSE, linkteki detayları okumak ZORUNDASIN. Siteyi okumak için SADECE şu formatta JSON döndür (başka tek kelime yazma):\n{"action": "read_site", "url": "girmek_istediğin_link"}\n\nDİKKAT: Kullanıcıya "Şu siteden bakabilirsiniz" demek KESİNLİKLE YASAKTIR.` }
+                { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Eğer sonuçlarda yeterli bilgi (örneğin teknik özellikler, fiyat) VARSA, bunları BİZZAT KENDİN MADDELER HALİNDE YAZ.\n2. Eğer sonuçlardaki bilgi YETERSİZSE, linkteki detayları okumak ZORUNDASIN. Siteyi okumak için SADECE şu formatta JSON döndür:\n{"action": "read_site", "url": "girmek_istediğin_link"}\n\nDİKKAT: Cihaz (telefon/araba vb) teknik özelliği listeliyorsan ŞU FORMATI ZORUNLU KULLAN:\n- Ekran: [inç ve özellik]\n- İşlemci: [işlemci adı]\n- Batarya: [mAh değeri]\n- Kamera: [megapiksel]\n- Fiyat: [TL]` }
               ];
               continue; // Ajan döngüye devam etsin
             } 
@@ -292,7 +292,7 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
               currentHistory = [
                 ...currentHistory,
                 { role: 'Assistant', text: stepResponse },
-                { role: 'System', text: `[${actionData.url}] sitesinden senin için çekilen en ilgili metinler:\n\n${relevantChunk}\n\nÖNEMLİ GÖREV: Bu metinlerdeki SAYISAL VERİLERİ ve TEKNİK DETAYLARI (örn. işlemci adı, mAh batarya, megapiksel, fiyat vb.) KESİNLİKLE koruyarak MADDELER HALİNDE ÖZETLE. 'Çok güçlü', 'harika' gibi yuvarlak pazarlama cümleleri kullanma, net bilgi ver. Kullanıcıya 'linke tıkla' veya 'siteden oku' demek KESİNLİKLE YASAKTIR.` }
+                { role: 'System', text: `[${actionData.url}] sitesinden senin için çekilen en ilgili metinler:\n\n${relevantChunk}\n\nÖNEMLİ GÖREV: Bu metinlerdeki SAYISAL VERİLERİ ve TEKNİK DETAYLARI koruyarak MADDELER HALİNDE ÖZETLE. 'Çok güçlü' gibi yuvarlak cümleler YASAKTIR.\nCihaz teknik özelliği listeliyorsan ŞU FORMATI ZORUNLU KULLAN:\n- Ekran: [inç ve özellik]\n- İşlemci: [işlemci adı]\n- Batarya: [mAh değeri]\n- Kamera: [megapiksel]\n- Fiyat: [TL]` }
               ];
               continue; // Ajan döngüye devam etsin
             }
