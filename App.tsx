@@ -8,12 +8,14 @@ import { HomeScreen } from './src/screens/HomeScreen';
 import { ChatScreen } from './src/screens/ChatScreen';
 import { VoiceScreen } from './src/screens/VoiceScreen';
 import { DeepThinkScreen } from './src/screens/DeepThinkScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
 
 export type RootStackParamList = {
   Home: undefined;
   Chat: undefined;
   Voice: undefined;
   DeepThink: undefined;
+  Profile: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -55,6 +57,11 @@ const App = () => {
             name="DeepThink" 
             component={DeepThinkScreen} 
             options={{ title: 'Derin Düşünme' }} 
+          />
+          <Stack.Screen 
+            name="Profile" 
+            component={ProfileScreen} 
+            options={{ title: 'Çekirdek Hafıza' }} 
           />
         </Stack.Navigator>
       </NavigationContainer>

@@ -7,12 +7,14 @@ import { performWebSearch } from '../utils/searchEngine';
 import { scrapeWebsite, chunkAndRetrieve } from '../utils/ragAgent';
 import { saveToMemory, searchMemory } from '../utils/localMemory';
 import notifee, { AndroidImportance } from '@notifee/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const DeepThinkScreen: React.FC = () => {
   const [query, setQuery] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [finalReport, setFinalReport] = useState<string | null>(null);
+  const [persona, setPersona] = useState('');
   
   const [llamaContext, setLlamaContext] = useState<LlamaContext | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -28,6 +30,9 @@ export const DeepThinkScreen: React.FC = () => {
 
   const loadSavedModel = async () => {
     try {
+      const savedPersona = await AsyncStorage.getItem('@user_persona');
+      if (savedPersona) setPersona(savedPersona);
+
       const files = await RNFS.readDir(RNFS.DocumentDirectoryPath);
       const ggufFile = files.find(f => f.name.endsWith('.gguf'));
       if (ggufFile) {
@@ -62,7 +67,7 @@ export const DeepThinkScreen: React.FC = () => {
     addLog('Derin düşünme protokolü başlatıldı...');
     
     let currentHistory = [
-      { role: 'System', text: 'Sen Otonom bir Araştırmacı Ajansın. Kullanıcının verdiği devasa görevi başarmak için arama (search), okuma (read_site) ve hafıza tarama (search_memory) araçlarını arka arkaya defalarca kullanabilirsin. İşin tamamen bittiğinde SONUÇ: diyerek nihai markdown raporunu yaz.' },
+      { role: 'System', text: `Sen Otonom bir Araştırmacı Ajansın. Kullanıcının verdiği devasa görevi başarmak için arama (search), okuma (read_site) ve hafıza tarama (search_memory) araçlarını arka arkaya defalarca kullanabilirsin. İşin tamamen bittiğinde SONUÇ: diyerek nihai markdown raporunu yaz.${persona ? `\n\nKULLANICI ÇEKİRDEK HAFIZASI (Görev yaparken buna göre davran):\n${persona}` : ''}` },
       { role: 'user', text: query }
     ];
 

@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, StyleSheet, TouchableWithoutFeedback, Animated, useColorScheme, ImageBackground } from 'react-native';
+import { BlurView } from '@react-native-community/blur';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 
@@ -9,42 +10,111 @@ interface Props {
   navigation: HomeScreenNavigationProp;
 }
 
-export const HomeScreen: React.FC<Props> = ({ navigation }) => {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark' || true; // Currently defaulting to dark theme heavily
+const AnimatedCard = ({ title, desc, icon, onPress, delay = 0 }: any) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const translateYAnim = useRef(new Animated.Value(50)).current;
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 500,
+        delay,
+        useNativeDriver: true,
+      }),
+      Animated.spring(translateYAnim, {
+        toValue: 0,
+        friction: 8,
+        tension: 40,
+        delay,
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, []);
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+    onPress();
+  };
 
   return (
+    <TouchableWithoutFeedback onPressIn={handlePressIn} onPressOut={handlePressOut}>
+      <Animated.View style={[styles.cardWrapper, { transform: [{ scale: scaleAnim }, { translateY: translateYAnim }], opacity: opacityAnim }]}>
+        <BlurView
+          style={styles.absoluteBlur}
+          blurType="dark"
+          blurAmount={20}
+          reducedTransparencyFallbackColor="black"
+        />
+        <View style={styles.cardContent}>
+          <Text style={styles.cardIcon}>{icon}</Text>
+          <View style={styles.cardTextContainer}>
+            <Text style={styles.cardTitle}>{title}</Text>
+            <Text style={styles.cardDesc}>{desc}</Text>
+          </View>
+        </View>
+      </Animated.View>
+    </TouchableWithoutFeedback>
+  );
+};
+
+export const HomeScreen: React.FC<Props> = ({ navigation }) => {
+  return (
     <View style={styles.container}>
-      <Text style={styles.title}>Aisistan OS</Text>
-      <Text style={styles.subtitle}>Nasıl yardımcı olabilirim?</Text>
+      <View style={styles.backgroundGradients}>
+        <View style={[styles.gradientCircle, styles.circle1]} />
+        <View style={[styles.gradientCircle, styles.circle2]} />
+      </View>
+      
+      <BlurView style={styles.absoluteBlur} blurType="dark" blurAmount={30} />
 
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.card} 
-          onPress={() => navigation.navigate('Chat')}
-        >
-          <Text style={styles.cardIcon}>💬</Text>
-          <Text style={styles.cardTitle}>Klasik Sohbet</Text>
-          <Text style={styles.cardDesc}>Metin, resim, kod ve asistan özellikleri.</Text>
-        </TouchableOpacity>
+      <View style={styles.content}>
+        <Text style={styles.title}>Aisistan OS</Text>
+        <Text style={styles.subtitle}>Otonom Zeka & Yerel Hafıza</Text>
 
-        <TouchableOpacity 
-          style={styles.card} 
-          onPress={() => navigation.navigate('Voice')}
-        >
-          <Text style={styles.cardIcon}>🎙️</Text>
-          <Text style={styles.cardTitle}>Telsiz Modu</Text>
-          <Text style={styles.cardDesc}>Gerçek zamanlı sesli iletişim arayüzü.</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.card} 
-          onPress={() => navigation.navigate('DeepThink')}
-        >
-          <Text style={styles.cardIcon}>🧠</Text>
-          <Text style={styles.cardTitle}>Derin Düşünme</Text>
-          <Text style={styles.cardDesc}>Otonom internet tarama ve raporlama.</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonContainer}>
+          <AnimatedCard 
+            icon="💬" 
+            title="Klasik Sohbet" 
+            desc="Metin, belge analizi ve internet tarama."
+            onPress={() => navigation.navigate('Chat')}
+            delay={0}
+          />
+          <AnimatedCard 
+            icon="🎙️" 
+            title="Telsiz Modu" 
+            desc="Gerçek zamanlı sesli iletişim arayüzü."
+            onPress={() => navigation.navigate('Voice')}
+            delay={100}
+          />
+          <AnimatedCard 
+            icon="🧠" 
+            title="Derin Düşünme" 
+            desc="Otonom araştırma ve raporlama."
+            onPress={() => navigation.navigate('DeepThink')}
+            delay={200}
+          />
+          <AnimatedCard 
+            icon="👤" 
+            title="Çekirdek Hafıza" 
+            desc="Kişisel profilini ve ayarlarını yönet."
+            onPress={() => navigation.navigate('Profile')}
+            delay={300}
+          />
+        </View>
       </View>
     </View>
   );
@@ -53,45 +123,84 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B1120',
+    backgroundColor: '#050B14',
+  },
+  backgroundGradients: {
+    ...StyleSheet.absoluteFill,
+    overflow: 'hidden',
+  },
+  gradientCircle: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.4,
+  },
+  circle1: {
+    top: -50,
+    left: -100,
+    backgroundColor: '#0284C7',
+  },
+  circle2: {
+    bottom: 50,
+    right: -100,
+    backgroundColor: '#3B82F6',
+  },
+  absoluteBlur: {
+    ...StyleSheet.absoluteFill,
+  },
+  content: {
+    flex: 1,
     padding: 20,
     justifyContent: 'center',
+    zIndex: 1,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 40,
+    fontWeight: '900',
     color: '#F8FAFC',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
+    letterSpacing: 1,
   },
   subtitle: {
     fontSize: 16,
     color: '#94A3B8',
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 50,
+    fontWeight: '500',
   },
   buttonContainer: {
     gap: 16,
   },
-  card: {
-    backgroundColor: '#1E293B',
-    padding: 20,
-    borderRadius: 16,
+  cardWrapper: {
+    borderRadius: 20,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  cardContent: {
+    flexDirection: 'row',
+    padding: 20,
+    alignItems: 'center',
+    backgroundColor: 'rgba(30, 41, 59, 0.4)',
   },
   cardIcon: {
-    fontSize: 28,
-    marginBottom: 8,
+    fontSize: 32,
+    marginRight: 16,
+  },
+  cardTextContainer: {
+    flex: 1,
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#F8FAFC',
     marginBottom: 4,
   },
   cardDesc: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: '#CBD5E1',
+    lineHeight: 20,
   },
 });

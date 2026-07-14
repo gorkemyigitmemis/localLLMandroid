@@ -16,6 +16,7 @@ import Tts from 'react-native-tts';
 export const ChatScreen: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversation, setConversation] = useState<{role: string, text: string}[]>([]);
+  const [persona, setPersona] = useState('');
   
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [isModelLoading, setIsModelLoading] = useState(false);
@@ -102,8 +103,10 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
     try {
       const savedMessages = await AsyncStorage.getItem('@messages');
       const savedConv = await AsyncStorage.getItem('@conversation');
+      const savedPersona = await AsyncStorage.getItem('@user_persona');
       if (savedMessages) setMessages(JSON.parse(savedMessages));
       if (savedConv) setConversation(JSON.parse(savedConv));
+      if (savedPersona) setPersona(savedPersona);
     } catch (e) {
       console.warn("Geçmiş yüklenemedi", e);
     }
@@ -172,7 +175,11 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
   };
 
   const buildPrompt = (history: {role: string, text: string}[]) => {
-    let p = `<start_of_turn>user\n${SYSTEM_PROMPT}<end_of_turn>\n`;
+    let p = `<start_of_turn>user\n${SYSTEM_PROMPT}`;
+    if (persona) {
+      p += `\n\nKULLANICI ÇEKİRDEK HAFIZASI (Sohbet boyunca buna göre davran):\n${persona}`;
+    }
+    p += `<end_of_turn>\n`;
     history.forEach(msg => {
       if (msg.role === 'User') {
         p += `<start_of_turn>user\n${msg.text}<end_of_turn>\n`;
@@ -402,35 +409,45 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, isDark && styles.safeAreaDark]} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView 
-        style={styles.container} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
-      >
-        <View style={[styles.header, isDark && styles.headerDark]}>
-          <Text style={[styles.headerTitle, isDark && styles.headerTitleDark]}>Aisistan</Text>
-          <TouchableOpacity onPress={clearHistory} style={styles.clearButton}>
-            <Text style={styles.clearButtonText}>🗑️ Temizle</Text>
-          </TouchableOpacity>
-        </View>
+    <View style={[styles.safeArea, isDark && styles.safeAreaDark]}>
+      {/* Background Gradients for Glassmorphism */}
+      <View style={StyleSheet.absoluteFill}>
+        <View style={[styles.gradientCircle, styles.circle1]} />
+        <View style={[styles.gradientCircle, styles.circle2]} />
+        <BlurView style={StyleSheet.absoluteFill} blurType={isDark ? "dark" : "light"} blurAmount={30} />
+      </View>
 
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <MessageBubble message={item} />}
-          contentContainerStyle={styles.listContent}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-          onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
-          removeClippedSubviews={true}
-          initialNumToRender={15}
-          maxToRenderPerBatch={10}
-          windowSize={10}
-        />
-        <ChatInput onSend={handleSend} disabled={isStreaming} />
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+        <KeyboardAvoidingView 
+          style={styles.container} 
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
+        >
+          <View style={[styles.header, isDark && styles.headerDark]}>
+            <BlurView style={StyleSheet.absoluteFill} blurType={isDark ? "dark" : "light"} blurAmount={20} />
+            <Text style={[styles.headerTitle, isDark && styles.headerTitleDark]}>Aisistan</Text>
+            <TouchableOpacity onPress={clearHistory} style={styles.clearButton}>
+              <Text style={styles.clearButtonText}>🗑️ Temizle</Text>
+            </TouchableOpacity>
+          </View>
+
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <MessageBubble message={item} />}
+            contentContainerStyle={styles.listContent}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            removeClippedSubviews={true}
+            initialNumToRender={15}
+            maxToRenderPerBatch={10}
+            windowSize={10}
+          />
+          <ChatInput onSend={handleSend} disabled={isStreaming} />
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 };
 
@@ -440,7 +457,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F2F7',
   },
   safeAreaDark: {
-    backgroundColor: '#0B1120', // Midnight blue instead of pure black
+    backgroundColor: '#050B14', // Midnight blue base for glass
+  },
+  gradientCircle: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.3,
+  },
+  circle1: {
+    top: -50,
+    left: -100,
+    backgroundColor: '#0284C7',
+  },
+  circle2: {
+    bottom: '20%',
+    right: -100,
+    backgroundColor: '#3B82F6',
   },
   container: {
     flex: 1,
@@ -449,15 +483,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
-    backgroundColor: 'rgba(242, 242, 247, 0.9)',
+    borderBottomColor: 'rgba(229, 229, 234, 0.3)',
+    backgroundColor: 'transparent',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   headerDark: {
-    backgroundColor: 'rgba(11, 17, 32, 0.85)',
-    borderBottomColor: '#1E293B',
+    borderBottomColor: 'rgba(30, 41, 59, 0.5)',
   },
   headerTitle: {
     fontSize: 20,
