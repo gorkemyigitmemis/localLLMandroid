@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, PermissionsAndroid, Platform, Alert } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Voice from '@react-native-community/voice';
@@ -70,18 +70,32 @@ export const VoiceScreen: React.FC = () => {
     if (isListening) {
       await Voice.stop();
       setIsListening(false);
+      pulseAnim.setValue(1);
     } else {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert("İzin Hatası", "Telsiz modunu kullanmak için mikrofon izni gereklidir.");
+          return;
+        }
+      }
+
       setTranscript('Dinleniyor...');
-      await Voice.start('tr-TR');
-      setIsListening(true);
-      startPulse();
+      try {
+        await Voice.start('tr-TR');
+        setIsListening(true);
+        startPulse();
+      } catch (e) {
+        console.error("Voice start error", e);
+        Alert.alert("Hata", "Mikrofon başlatılamadı.");
+      }
     }
   };
 
   const startPulse = () => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.2, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1.3, duration: 800, useNativeDriver: true }),
         Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true })
       ])
     ).start();
@@ -131,7 +145,7 @@ export const VoiceScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#050B14',
+    backgroundColor: '#030712', // Very dark background
   },
   safeArea: {
     flex: 1,
@@ -140,40 +154,50 @@ const styles = StyleSheet.create({
   },
   gradientCircle: {
     position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    opacity: 0.3,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    opacity: 0.25,
   },
   circle1: {
-    top: '10%',
-    left: -100,
-    backgroundColor: '#0284C7',
+    top: '-5%',
+    left: -150,
+    backgroundColor: '#0EA5E9', // Vibrant blue
   },
   circle2: {
-    bottom: '20%',
-    right: -100,
-    backgroundColor: '#8B5CF6',
+    bottom: '-10%',
+    right: -150,
+    backgroundColor: '#8B5CF6', // Vibrant purple
   },
   header: {
-    marginTop: 20,
+    marginTop: 40,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   title: {
     color: '#F8FAFC',
-    fontSize: 24,
-    fontWeight: 'bold',
-    letterSpacing: 1,
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   centerBox: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    alignItems: 'center',
+    paddingHorizontal: 30,
+    width: '100%',
   },
   transcript: {
-    color: '#38BDF8',
-    fontSize: 28,
+    color: '#E0F2FE',
+    fontSize: 32,
     textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: '300',
+    lineHeight: 44,
   },
   statusText: {
     color: '#94A3B8',
@@ -181,21 +205,23 @@ const styles = StyleSheet.create({
     marginTop: '50%',
   },
   micButtonContainer: {
-    marginBottom: 60,
+    marginBottom: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   micButton: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: 'rgba(14, 165, 233, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    shadowColor: '#38BDF8',
+    borderWidth: 2,
+    borderColor: 'rgba(14, 165, 233, 0.4)',
+    shadowColor: '#0EA5E9',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
+    shadowOpacity: 0.8,
+    shadowRadius: 30,
   },
   micIcon: {
     fontSize: 40,
