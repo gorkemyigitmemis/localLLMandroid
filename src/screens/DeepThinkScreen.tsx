@@ -61,9 +61,10 @@ Aşağıdaki ARAÇLARI (TOOLS) arka arkaya defalarca kullanarak araştırma yapm
 
 KURALLAR:
 1. Araştırma yaparken (bilgi eksikken) ASLA normal metin yazma, sadece JSON araçlarını kullan.
-2. Kullanıcının BÜTÜN isteklerini (örneğin hem uçak fiyatlarını hem de detaylı gezi rotasını) bulmadan görevi bitirme.
-3. Plan yapıyorsan "Kültürel bir yer gez" gibi baştan savma cevaplar KESİNLİKLE YASAKTIR. Net mekan adları, fiyatlar ve nokta atışı yerler vereceksin.
-4. Tüm araştırman bittiğinde raporunu "SONUÇ:" kelimesiyle başlayarak Markdown olarak yaz.
+2. TEK SEFERDE SADECE BİR ARAÇ (BİR JSON) KULLANABİLİRSİN. Birden fazla JSON bloğunu alt alta yazmak KESİNLİKLE YASAKTIR.
+3. Kullanıcının BÜTÜN isteklerini (örneğin hem uçak fiyatlarını hem de detaylı gezi rotasını) bulmadan görevi bitirme.
+4. Plan yapıyorsan "Kültürel bir yer gez" gibi baştan savma cevaplar KESİNLİKLE YASAKTIR. Net mekan adları, fiyatlar ve nokta atışı yerler vereceksin.
+5. Tüm araştırman bittiğinde raporunu "SONUÇ:" kelimesiyle başlayarak Markdown olarak yaz.
 
 ${persona ? `KULLANICI ÇEKİRDEK HAFIZASI:\n${persona}` : ''}`;
 
@@ -91,7 +92,7 @@ ${persona ? `KULLANICI ÇEKİRDEK HAFIZASI:\n${persona}` : ''}`;
           }
         );
 
-        const jsonMatch = stepResponse.match(/\{[\s\S]*"action"[\s\S]*\}/);
+        const jsonMatch = stepResponse.match(/\{[^{}]*"action"[^{}]*\}/);
         
         if (jsonMatch) {
           try {
@@ -142,14 +143,25 @@ ${persona ? `KULLANICI ÇEKİRDEK HAFIZASI:\n${persona}` : ''}`;
               continue;
             }
           } catch (e) {
-            addLog(`Araç ayrıştırma hatası, veri doğal dil olarak kabul ediliyor.`);
+            addLog(`Araç ayrıştırma hatası tespit edildi. Modele uyarı gönderiliyor...`);
+            currentHistory.push({ role: 'Assistant', text: stepResponse });
+            currentHistory.push({ role: 'System', text: `[SİSTEM HATASI] Geçersiz JSON formatı veya birden fazla JSON girdisi saptandı. TEK SEFERDE SADECE BİR ARAÇ (BİR JSON) YAZ. Eğer araştırma bittiyse SONUÇ: tagi ile raporunu tamamla.` });
+            continue;
           }
         }
 
-        // If it outputs "SONUÇ:" or no tools used, consider it done
-        addLog('Araştırma tamamlandı. Nihai rapor derleniyor...');
-        finalResponse = stepResponse;
-        break;
+        // If it outputs "SONUÇ:" or no JSON tools were successfully used:
+        if (stepResponse.includes("SONUÇ:")) {
+          addLog('Araştırma tamamlandı. Nihai rapor derleniyor...');
+          finalResponse = stepResponse;
+          break;
+        } else {
+          // LLM forgot to use tools and forgot SONUÇ tag. Warn it.
+          addLog('Model tanımsız formatta yanıt verdi. Uyarı gönderiliyor...');
+          currentHistory.push({ role: 'Assistant', text: stepResponse });
+          currentHistory.push({ role: 'System', text: `[SİSTEM UYARISI] Hiçbir JSON aracı kullanmadın ve "SONUÇ:" tagiyle rapor yazmadın. Lütfen ya arama/okuma JSON aracı kullan ya da işin bittiyse SONUÇ: diyerek raporunu yaz.` });
+          continue;
+        }
       }
       
       setFinalReport(finalResponse);
