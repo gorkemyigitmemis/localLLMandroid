@@ -273,7 +273,7 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
               currentHistory = [
                 ...currentHistory,
                 { role: 'Assistant', text: stepResponse },
-                { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Eğer sonuçlarda cihazın sorulan TEKNİK DETAYLARI tam olarak VARSA, bunları BİZZAT KENDİN MADDELER HALİNDE YAZ.\n2. Eğer detaylar EKSİKSE, "bilmiyorum" veya "erişimim yok" demek KESİNLİKLE YASAKTIR! Eksik bilgiyi bulmak için SADECE şu formatta JSON döndürerek linke girmelisin:\n{"action": "read_site", "url": "girmek_istediğin_link"}\n\nDİKKAT: Cihaz özelliği yazarken şablonları kopyalama, sadece bulduğun net verileri (İşlemci: MediaTek vb.) alt alta yaz.` }
+                { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Sonuçlardaki TEKNİK DETAYLARI (varsa) BİZZAT KENDİN MADDELER HALİNDE YAZ.\n2. Kullanıcıya ASLA "şu linkten bakabilirsiniz" diyerek link verme!\n3. Eğer sorulan cihazın/bilginin verisi sonuçlarda YOKSA (çıkmamış telefon vb.), uydurma ve "İnternette bu cihaz hakkında henüz resmi bir teknik veri bulunmuyor" de. "Bilmiyorum" kelimesini kullanma.\n4. Daha fazla detaya inmek istersen SADECE JSON formatında {"action": "read_site", "url": "..."} döndürebilirsin, ama linki asla düz metin olarak yazma.` }
               ];
               continue; // Ajan döngüye devam etsin
             } 

@@ -161,7 +161,7 @@ ${persona ? `KULLANICI ÇEKİRDEK HAFIZASI:\n${persona}` : ''}`;
               addLog(`Arama sonuçları başarıyla çekildi. (${searchResults.length} karakter)`);
               
               currentHistory.push({ role: 'Assistant', text: stepResponse });
-              currentHistory.push({ role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Eğer sonuçlarda yeterli bilgi VARSA, bunları BİZZAT KENDİN MADDELER HALİNDE YAZ.\n2. Eğer bilgi YETERSİZSE, "bilmiyorum" veya "erişimim yok" demek KESİNLİKLE YASAKTIR! Linkteki detayları okumak ZORUNDASIN. Siteyi okumak için SADECE şu formatta JSON döndür:\n{"action": "read_site", "url": "girmek_istediğin_link"}\n\nDİKKAT: Cihaz özelliği yazarken şablonları kopyalama, sadece bulduğun net verileri alt alta yaz.` });
+              currentHistory.push({ role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Sonuçlardaki TEKNİK DETAYLARI (varsa) BİZZAT KENDİN MADDELER HALİNDE YAZ.\n2. Kullanıcıya ASLA "şu linkten bakabilirsiniz" diyerek link verme!\n3. Eğer sorulan cihazın/bilginin verisi sonuçlarda YOKSA (çıkmamış telefon vb.), uydurma ve "İnternette bu cihaz hakkında henüz resmi bir teknik veri bulunmuyor" de. "Bilmiyorum" kelimesini kullanma.\n4. Daha fazla detaya inmek istersen SADECE JSON formatında {"action": "read_site", "url": "..."} döndürebilirsin, ama linki asla düz metin olarak yazma.` });
               continue;
             } 
             else if (actionData.action === 'read_site' && actionData.url) {
