@@ -25,7 +25,7 @@ export const loadGlobalModel = async (modelPath?: string): Promise<LlamaContext 
       globalLlamaContext = await initLlama({
         model: pathToLoad,
         use_mlock: true, // Keep in RAM
-        n_ctx: 2048,     // Generous context length for all modes
+        n_ctx: 4096,     // Doubled context length to eliminate context overflow crashes
         n_gpu_layers: 1, // Enable Metal / GPU
       });
       return globalLlamaContext;
