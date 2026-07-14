@@ -173,7 +173,16 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
     // RAM ve Token limitini korumak için sadece son 6 mesajı (3 diyalog) al
     let currentHistory = history.length > 6 ? history.slice(history.length - 6) : [...history];
     let finalResponse = "";
-    const userQuery = history[history.length - 1].text;
+    const userQuery = history[history.length - 1].text.toLowerCase();
+
+    // SMART INTERCEPTOR FOR FORCING SEARCH
+    const needsTechSearch = /(özellik|işlemci|batarya|ekran|kamera|motor|beygir|tork|fiyat|kaç mah|kaç hz|nüfus|kimdir|nedir)/i.test(userQuery);
+    if (needsTechSearch) {
+        currentHistory.push({
+            role: 'System', 
+            text: `[SİSTEM ZORLAMASI] Kullanıcının son sorusu güncel/spesifik veri (teknik özellik, fiyat, hava vb.) gerektiriyor. KENDİ BİLGİLERİNLE CEVAPLAMAN YASAKTIR. SADECE {"action": "search", "query": "aranacak kelime"} aracını kullan!`
+        });
+    }
 
     try {
       for (let step = 0; step < 3; step++) {

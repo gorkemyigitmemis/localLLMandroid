@@ -107,6 +107,15 @@ ${persona ? `KULLANICI ÇEKİRDEK HAFIZASI:\n${persona}` : ''}`;
       { role: 'user', text: query }
     ];
 
+    // SMART INTERCEPTOR FOR FORCING SEARCH
+    const needsTechSearch = /(özellik|işlemci|batarya|ekran|kamera|motor|beygir|tork|fiyat|kaç mah|kaç hz|plan|gezi|rota)/i.test(query.toLowerCase());
+    if (needsTechSearch) {
+        currentHistory.push({
+            role: 'System', 
+            text: `[SİSTEM ZORLAMASI] Kullanıcının sorusu araştırma gerektiriyor. Kendi bilgilerini kullanman YASAKTIR. ŞİMDİ SADECE JSON ARAÇLARINI KULLANARAK ARAMA YAP.`
+        });
+    }
+
     let finalResponse = "";
 
     try {
