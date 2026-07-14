@@ -222,7 +222,7 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
               );
 
               const rawText = await scrapeWebsite(actionData.url);
-              const relevantChunk = chunkAndRetrieve(rawText, userQuery, 3); // Zero-RAM RAG
+              const relevantChunk = chunkAndRetrieve(rawText, userQuery, 10); // Zero-RAM RAG
               
               // Hafızaya (SSD) kaydet
               await saveToMemory(actionData.url, relevantChunk);
