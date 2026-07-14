@@ -270,7 +270,7 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
               currentHistory = [
                 ...currentHistory,
                 { role: 'Assistant', text: stepResponse },
-                { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Eğer sonuçlarda yeterli bilgi (örneğin teknik özellikler, fiyat) VARSA, bunları BİZZAT KENDİN MADDELER HALİNDE YAZ.\n2. Eğer sonuçlardaki bilgi YETERSİZSE, linkteki detayları okumak ZORUNDASIN. Siteyi okumak için SADECE şu formatta JSON döndür:\n{"action": "read_site", "url": "girmek_istediğin_link"}\n\nDİKKAT: Cihaz (telefon/araba vb) teknik özelliği listeliyorsan ŞU FORMATI ZORUNLU KULLAN:\n- Ekran: [inç ve özellik]\n- İşlemci: [işlemci adı]\n- Batarya: [mAh değeri]\n- Kamera: [megapiksel]\n- Fiyat: [TL]` }
+                { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Eğer sonuçlarda yeterli bilgi VARSA, bunları BİZZAT KENDİN MADDELER HALİNDE YAZ.\n2. Eğer bilgi YETERSİZSE, SADECE şu formatta JSON döndür:\n{"action": "read_site", "url": "girmek_istediğin_link"}\n\nDİKKAT:\nTELEFON özelliği listeliyorsan ZORUNLU FORMAT:\n- Ekran: [inç]\n- İşlemci: [ad]\n- Batarya: [mAh]\n- Kamera: [megapiksel]\n- Fiyat: [TL]\n\nARABA özelliği listeliyorsan ZORUNLU FORMAT:\n- Motor: [Hacim]\n- Güç: [Beygir]\n- Tork: [Nm]\n- Kapasite: [Kaç kişilik]\n- 0-100: [saniye]` }
               ];
               continue; // Ajan döngüye devam etsin
             } 
@@ -292,7 +292,7 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
               currentHistory = [
                 ...currentHistory,
                 { role: 'Assistant', text: stepResponse },
-                { role: 'System', text: `[${actionData.url}] sitesinden senin için çekilen en ilgili metinler:\n\n${relevantChunk}\n\nÖNEMLİ GÖREV: Bu metinlerdeki SAYISAL VERİLERİ ve TEKNİK DETAYLARI koruyarak MADDELER HALİNDE ÖZETLE. 'Çok güçlü' gibi yuvarlak cümleler YASAKTIR.\nCihaz teknik özelliği listeliyorsan ŞU FORMATI ZORUNLU KULLAN:\n- Ekran: [inç ve özellik]\n- İşlemci: [işlemci adı]\n- Batarya: [mAh değeri]\n- Kamera: [megapiksel]\n- Fiyat: [TL]` }
+                { role: 'System', text: `[${actionData.url}] sitesinden en ilgili metinler:\n\n${relevantChunk}\n\nÖNEMLİ GÖREV: SAYISAL VERİLERİ koruyarak MADDELER HALİNDE ÖZETLE. 'Çok güçlü' gibi yuvarlak cümleler YASAKTIR.\n\nTELEFON özelliği listeliyorsan ZORUNLU FORMAT:\n- Ekran: [inç]\n- İşlemci: [ad]\n- Batarya: [mAh]\n- Kamera: [megapiksel]\n- Fiyat: [TL]\n\nARABA özelliği listeliyorsan ZORUNLU FORMAT:\n- Motor: [Hacim]\n- Güç: [Beygir]\n- Tork: [Nm]\n- Kapasite: [Kaç kişilik]\n- 0-100: [saniye]` }
               ];
               continue; // Ajan döngüye devam etsin
             }
