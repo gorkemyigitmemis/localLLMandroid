@@ -174,7 +174,7 @@ ${persona ? `KULLANICI ÇEKİRDEK HAFIZASI:\n${persona}` : ''}`;
             else if (actionData.action === 'read_site' && actionData.url) {
               addLog(`Araç tetiklendi: Site Kazıma -> "${actionData.url}"`);
               const rawText = await scrapeWebsite(actionData.url);
-              const relevantChunk = chunkAndRetrieve(rawText, query, 10);
+              const relevantChunk = chunkAndRetrieve(rawText, query, 3); // OOM Limit
               
               // Hafızaya (SSD) kaydet
               await saveToMemory(actionData.url, relevantChunk);
