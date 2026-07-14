@@ -47,6 +47,12 @@ export const performWebSearch = async (query: string): Promise<string> => {
     }
 
     if (results.length === 0) {
+      if (query.includes('site:')) {
+        // Fallback: Remove all 'site:xxx.com' constraints and search the whole web
+        const fallbackQuery = query.replace(/site:\S+/g, '').replace(/\s+OR\s+/g, ' ').trim();
+        console.log(`Fallback search triggered for: ${fallbackQuery}`);
+        return await performWebSearch(fallbackQuery);
+      }
       return "İnternet aramasında belirgin bir sonuç bulunamadı.";
     }
 
