@@ -230,7 +230,7 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
               currentHistory = [
                 ...currentHistory,
                 { role: 'Assistant', text: stepResponse },
-                { role: 'System', text: `[${actionData.url}] sitesinden senin için çekilen en ilgili metinler:\n\n${relevantChunk}\n\nBu metinleri okuyup analiz ederek kullanıcıya Markdown formatında şık ve detaylı bir cevap ver.` }
+                { role: 'System', text: `[${actionData.url}] sitesinden senin için çekilen en ilgili metinler:\n\n${relevantChunk}\n\nÖNEMLİ GÖREV: Bu metinleri okuyup KENDİN MADDELER HALİNDE ÖZETLE. Kullanıcıya 'linke tıkla' veya 'siteden oku' demek KESİNLİKLE YASAKTIR.` }
               ];
               continue; // Ajan döngüye devam etsin
             }
@@ -248,7 +248,7 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
               currentHistory = [
                 ...currentHistory,
                 { role: 'Assistant', text: stepResponse },
-                { role: 'System', text: `Yerel SSD hafızasından gelen sonuçlar:\n${memoryResults}\n\nEğer yeterliyse kullanıcıya cevap ver.` }
+                { role: 'System', text: `Yerel SSD hafızasından gelen sonuçlar:\n${memoryResults}\n\nÖNEMLİ GÖREV: Bu hafıza sonuçlarını kullanarak BİZZAT KENDİN DETAYLI CEVAP VER. Link atıp geçmek yasaktır.` }
               ];
               continue;
             }

@@ -92,7 +92,7 @@ export const DeepThinkScreen: React.FC = () => {
               addLog(`Arama sonuçları başarıyla çekildi. (${searchResults.length} karakter)`);
               
               currentHistory.push({ role: 'Assistant', text: stepResponse });
-              currentHistory.push({ role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nDaha fazla veriye ihtiyacın varsa site okuyabilirsin (read_site), yeterliyse nihai raporunu SONUÇ: tagi ile yaz.` });
+              currentHistory.push({ role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV: Kullanıcıya asla link verip geçme! Arama sonuçlarındaki bilgileri MADDELER HALİNDE KENDİN DERLE. Daha fazla veriye ihtiyacın varsa site okuyabilirsin (read_site), yeterliyse nihai raporunu SONUÇ: tagi ile yaz.` });
               continue;
             } 
             else if (actionData.action === 'read_site' && actionData.url) {
@@ -106,7 +106,7 @@ export const DeepThinkScreen: React.FC = () => {
               addLog(`Siteden en uygun veri parçaları koparıldı ve diske kaydedildi. (${relevantChunk.length} karakter)`);
 
               currentHistory.push({ role: 'Assistant', text: stepResponse });
-              currentHistory.push({ role: 'System', text: `[${actionData.url}] içerik özeti:\n${relevantChunk}\n\nEğer araştırma bittiyse raporunu hazırla.` });
+              currentHistory.push({ role: 'System', text: `[${actionData.url}] içerik özeti:\n${relevantChunk}\n\nÖNEMLİ GÖREV: Bu verileri analiz et ve kullanıcının sorusuna detaylı bir rapor olarak sun. 'Şu linke bak' demek YASAKTIR. Eğer araştırma bittiyse nihai raporunu SONUÇ: tagi ile yaz.` });
               continue;
             }
             else if (actionData.action === 'search_memory' && actionData.query) {
@@ -115,7 +115,7 @@ export const DeepThinkScreen: React.FC = () => {
               addLog(`Hafıza taraması bitti.`);
               
               currentHistory.push({ role: 'Assistant', text: stepResponse });
-              currentHistory.push({ role: 'System', text: `Yerel SSD hafızasından gelen sonuçlar:\n${memoryResults}\n\nEğer araştırma bittiyse raporunu hazırla.` });
+              currentHistory.push({ role: 'System', text: `Yerel SSD hafızasından gelen sonuçlar:\n${memoryResults}\n\nÖNEMLİ GÖREV: Bu hafıza sonuçlarını kullanarak BİZZAT KENDİN DETAYLI RAPOR HAZIRLA. Eğer araştırma bittiyse nihai raporunu SONUÇ: tagi ile yaz.` });
               continue;
             }
           } catch (e) {
