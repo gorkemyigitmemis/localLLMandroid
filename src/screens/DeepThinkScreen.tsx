@@ -46,8 +46,29 @@ export const DeepThinkScreen: React.FC = () => {
     setFinalReport(null);
     addLog('Derin düşünme protokolü başlatıldı...');
     
+    const DEEP_THINK_PROMPT = `Sen Otonom bir Araştırmacı Ajansın. Görevin, kullanıcının verdiği karmaşık veya çok aşamalı istekleri mükemmel bir şekilde araştırmaktır.
+
+Aşağıdaki ARAÇLARI (TOOLS) arka arkaya defalarca kullanarak araştırma yapmalısın. Aracı kullanmak için SADECE aşağıdaki JSON formatını yaz.
+
+1. İNTERNETTE ARAMA YAPMAK İÇİN: (Fiyatlar, uçak biletleri, detaylı mekan veya gezi rotaları vs.)
+{"action": "search", "query": "aranacak kelime"}
+
+2. BİR SİTEYİ İNCELEMEK İÇİN: (Arama sonuçlarında çıkan detayları okumak için ZORUNLUDUR)
+{"action": "read_site", "url": "https://..."}
+
+3. KULLANICI HAFIZASINI TARAMAK İÇİN:
+{"action": "search_memory", "query": "kelime"}
+
+KURALLAR:
+1. Araştırma yaparken (bilgi eksikken) ASLA normal metin yazma, sadece JSON araçlarını kullan.
+2. Kullanıcının BÜTÜN isteklerini (örneğin hem uçak fiyatlarını hem de detaylı gezi rotasını) bulmadan görevi bitirme.
+3. Plan yapıyorsan "Kültürel bir yer gez" gibi baştan savma cevaplar KESİNLİKLE YASAKTIR. Net mekan adları, fiyatlar ve nokta atışı yerler vereceksin.
+4. Tüm araştırman bittiğinde raporunu "SONUÇ:" kelimesiyle başlayarak Markdown olarak yaz.
+
+${persona ? `KULLANICI ÇEKİRDEK HAFIZASI:\n${persona}` : ''}`;
+
     let currentHistory = [
-      { role: 'System', text: `Sen Otonom bir Araştırmacı Ajansın. Kullanıcının verdiği devasa görevi başarmak için arama (search), okuma (read_site) ve hafıza tarama (search_memory) araçlarını arka arkaya defalarca kullanabilirsin. İşin tamamen bittiğinde SONUÇ: diyerek nihai markdown raporunu yaz.${persona ? `\n\nKULLANICI ÇEKİRDEK HAFIZASI (Görev yaparken buna göre davran):\n${persona}` : ''}` },
+      { role: 'System', text: DEEP_THINK_PROMPT },
       { role: 'user', text: query }
     ];
 
