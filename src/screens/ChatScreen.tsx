@@ -137,7 +137,8 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
   const generateResponse = async (history: {role: string, text: string}[], botMessageId: string) => {
     if (!llamaContext) return;
     
-    let currentHistory = [...history];
+    // RAM ve Token limitini korumak için sadece son 6 mesajı (3 diyalog) al
+    let currentHistory = history.length > 6 ? history.slice(history.length - 6) : [...history];
     let finalResponse = "";
     const userQuery = history[history.length - 1].text;
 
