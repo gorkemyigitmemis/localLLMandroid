@@ -129,7 +129,7 @@ ${persona ? `KULLANICI ÇEKİRDEK HAFIZASI:\n${persona}` : ''}`;
               addLog(`Siteden en uygun veri parçaları koparıldı ve diske kaydedildi. (${relevantChunk.length} karakter)`);
 
               currentHistory.push({ role: 'Assistant', text: stepResponse });
-              currentHistory.push({ role: 'System', text: `[${actionData.url}] içerik özeti:\n${relevantChunk}\n\nÖNEMLİ GÖREV: Bu verileri analiz et ve kullanıcının sorusuna detaylı bir rapor olarak sun. 'Şu linke bak' demek YASAKTIR. Eğer araştırma bittiyse nihai raporunu SONUÇ: tagi ile yaz.` });
+              currentHistory.push({ role: 'System', text: `[${actionData.url}] içerik özeti:\n${relevantChunk}\n\nÖNEMLİ GÖREV: Bu verilerdeki SAYISAL BİLGİLERİ, TEKNİK TERİMLERİ ve NET FİYATLARI koruyarak detaylı bir rapor sun. 'Çok iyi', 'harika' gibi yuvarlak kelimeler kullanma, analitik ol. 'Şu linke bak' demek YASAKTIR. Eğer araştırma bittiyse nihai raporunu SONUÇ: tagi ile yaz.` });
               continue;
             }
             else if (actionData.action === 'search_memory' && actionData.query) {

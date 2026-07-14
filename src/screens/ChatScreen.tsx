@@ -232,7 +232,7 @@ Aisistan: {"action": "read_site", "url": "https://tr.wikipedia.org/wiki/Kara_del
               currentHistory = [
                 ...currentHistory,
                 { role: 'Assistant', text: stepResponse },
-                { role: 'System', text: `[${actionData.url}] sitesinden senin için çekilen en ilgili metinler:\n\n${relevantChunk}\n\nÖNEMLİ GÖREV: Bu metinleri okuyup KENDİN MADDELER HALİNDE ÖZETLE. Kullanıcıya 'linke tıkla' veya 'siteden oku' demek KESİNLİKLE YASAKTIR.` }
+                { role: 'System', text: `[${actionData.url}] sitesinden senin için çekilen en ilgili metinler:\n\n${relevantChunk}\n\nÖNEMLİ GÖREV: Bu metinlerdeki SAYISAL VERİLERİ ve TEKNİK DETAYLARI (örn. işlemci adı, mAh batarya, megapiksel, fiyat vb.) KESİNLİKLE koruyarak MADDELER HALİNDE ÖZETLE. 'Çok güçlü', 'harika' gibi yuvarlak pazarlama cümleleri kullanma, net bilgi ver. Kullanıcıya 'linke tıkla' veya 'siteden oku' demek KESİNLİKLE YASAKTIR.` }
               ];
               continue; // Ajan döngüye devam etsin
             }
