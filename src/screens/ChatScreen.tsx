@@ -273,7 +273,7 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
               currentHistory = [
                 ...currentHistory,
                 { role: 'Assistant', text: stepResponse },
-                { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Sonuçlardaki bilgileri BİZZAT KENDİN YAZ.\n2. Kullanıcıya ASLA "şu linke gidin" gibi cümleler kurma ve KESİNLİKLE LİNK VERME!\n3. Eğer aradığın bilgi sonuçlarda YOKSA (çıkmamış telefon vb.), uydurma ve "İnternette bu cihaz hakkında henüz resmi bir veri bulunmuyor" de. "Bilmiyorum" deme.` }
+                { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Sonuçlardaki bilgileri (haber metni dahi olsa içindeki işlemci, ekran, kamera gibi teknik verileri bularak) BİZZAT KENDİN YAZ.\n2. Kullanıcıya ASLA "şu linke gidin" gibi cümleler kurma ve KESİNLİKLE LİNK VERME!\n3. Eğer aradığın bilgi sonuçlarda HİÇBİR ŞEKİLDE YOKSA uydurma ve "İnternette bu konu hakkında net bir veri bulunamadı" de. "Bilmiyorum" deme.` }
               ];
               continue; // Ajan döngüye devam etsin
             } 
