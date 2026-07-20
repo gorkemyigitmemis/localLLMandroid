@@ -130,8 +130,15 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
     const userQuery = history[history.length - 1].text.toLowerCase();
 
     // DENGELİ YÖNLENDİRİCİ (Sadece net veri/bilgi arayışlarında devreye girer, normal sohbeti bozmaz)
-    const isDataQuery = /(hava durumu|kaç derece|nüfus|fiyat|özellik|teknik detay|kimdir|nedir|beygir|motor|saat kaç|uçak|otobüs|tren|feribot|bilet|kaç para|ne kadar|dolar|euro|altın|bitcoin|kripto|döviz|gram|borsa|maç|derbi|skor|fikstür|galatasaray|fenerbahçe|beşiktaş|trabzonspor|lig|film|dizi|sinema|imdb|vizyon|yemek|tarifi|nasıl yapılır|malzemeler|nöbetçi eczane|burç|günlük yorum)/i.test(userQuery);
-    if (isDataQuery) {
+    const isDataQuery = /(hava durumu|kaç derece|nüfus|fiyat|özellik|teknik detay|kimdir|nedir|beygir|motor|saat kaç|uçak|otobüs|tren|feribot|bilet|kaç para|ne kadar|dolar|euro|altın|bitcoin|kripto|döviz|gram|borsa|maç|derbi|skor|fikstür|galatasaray|fenerbahçe|beşiktaş|trabzonspor|lig|film|dizi|sinema|imdb|vizyon|yemek|tarifi|nasıl yapılır|malzemeler|nöbetçi eczane|burç|günlük yorum|haber|son dakika|gündem)/i.test(userQuery);
+    const isIntentQuery = /(instagram|whatsapp|youtube|spotify|twitter|facebook|kamera).*?(aç|başlat|gir|mesaj at)/i.test(userQuery);
+
+    if (isIntentQuery) {
+        currentHistory.push({
+            role: 'System', 
+            text: `[ZORUNLU KOMUT] Kullanıcı telefondaki bir uygulamayı açmanı istiyor. Başka HİÇBİR ŞEY yazma, SADECE {"action": "intent", "url": "appname://"} formatında JSON çıktısı ver. Örnek url'ler: whatsapp://, instagram://, youtube://, spotify://`
+        });
+    } else if (isDataQuery) {
         currentHistory.push({
             role: 'System', 
             text: `[ZORUNLU ARAMA] Bu soru güncel veya net bir bilgi gerektiriyor. Kendi bilgilerini kullanma, SADECE {"action": "search", "query": "..."} formatında yanıt ver!`
@@ -221,6 +228,8 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
                 finalQuery += ' site:eczaneler.gen.tr';
               } else if (lowerQ.includes('burç') || lowerQ.includes('günlük yorum')) {
                 finalQuery += ' site:elele.com.tr';
+              } else if (lowerQ.includes('haber') || lowerQ.includes('son dakika') || lowerQ.includes('gündem')) {
+                finalQuery += ' site:sondakika.com OR site:haberturk.com/sondakika';
               } else if (lowerQ.includes('özellik') || lowerQ.includes('işlemci') || lowerQ.includes('batarya') || lowerQ.includes('teknik detay')) {
                 if (!lowerQ.includes('araba') && !lowerQ.includes('motor') && !lowerQ.includes('beygir')) {
                   finalQuery += ' site:epey.com';
