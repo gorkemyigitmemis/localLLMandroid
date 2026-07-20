@@ -130,11 +130,11 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
     const userQuery = history[history.length - 1].text.toLowerCase();
 
     // DENGELİ YÖNLENDİRİCİ (Sadece net veri/bilgi arayışlarında devreye girer, normal sohbeti bozmaz)
-    const isDataQuery = /(hava durumu|kaç derece|nüfus|fiyat|özellikleri|teknik detay|kimdir|nedir|kaç beygir|motor hacmi|saat kaç)/i.test(userQuery);
+    const isDataQuery = /(hava durumu|kaç derece|nüfus|fiyat|özellikleri|teknik detay|kimdir|nedir|kaç beygir|motor hacmi|saat kaç|uçak|otobüs|tren|feribot|bilet|kaç para|ne kadar)/i.test(userQuery);
     if (isDataQuery) {
         currentHistory.push({
             role: 'System', 
-            text: `[ZORUNLU ARAMA] Bu soru güncel veya net bir bilgi (hava, nüfus, fiyat, özellik) gerektiriyor. Kendi bilgilerini kullanma, SADECE {"action": "search", "query": "..."} formatında yanıt ver!`
+            text: `[ZORUNLU ARAMA] Bu soru güncel veya net bir bilgi (hava, nüfus, fiyat, bilet, özellik) gerektiriyor. Kendi bilgilerini kullanma, SADECE {"action": "search", "query": "..."} formatında yanıt ver!`
         });
     }
 
