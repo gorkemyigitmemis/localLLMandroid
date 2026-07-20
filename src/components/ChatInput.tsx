@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator, useColorScheme } from 'react-native';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, useColorScheme } from 'react-native';
 import Voice, { SpeechResultsEvent, SpeechErrorEvent } from '@react-native-community/voice';
-import { launchImageLibrary } from 'react-native-image-picker';
-import TextRecognition from 'react-native-text-recognition';
-import DocumentPicker from 'react-native-document-picker';
-import RNFS from 'react-native-fs';
-import { saveToMemory } from '../utils/localMemory';
 
 interface Props {
   onSend: (text: string) => void;
@@ -15,7 +10,6 @@ interface Props {
 export const ChatInput: React.FC<Props> = ({ onSend, disabled }) => {
   const [text, setText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -62,60 +56,7 @@ export const ChatInput: React.FC<Props> = ({ onSend, disabled }) => {
     }
   };
 
-  const handleImagePick = async () => {
-    const result = await launchImageLibrary({ mediaType: 'photo' });
-    if (result.assets && result.assets.length > 0) {
-      const uri = result.assets[0].uri;
-      if (uri) {
-        setIsAnalyzing(true);
-        try {
-          const recognizedText = await TextRecognition.recognize(uri);
-          if (recognizedText && recognizedText.length > 0) {
-            const combinedText = recognizedText.join(' ');
-            setText((prev) => prev + (prev.length > 0 ? '\n' : '') + `[FOTOĞRAF METNİ: ${combinedText}]`);
-          }
-        } catch (err) {
-          console.error("OCR Error", err);
-        } finally {
-          setIsAnalyzing(false);
-        }
-      }
-    }
-  };
 
-  const handleDocumentPick = async () => {
-    try {
-      const res = await DocumentPicker.pickSingle({
-        type: [DocumentPicker.types.plainText, DocumentPicker.types.csv, DocumentPicker.types.allFiles],
-      });
-      if (res.uri) {
-        setIsAnalyzing(true);
-        try {
-          let fileUri = res.uri;
-          if (fileUri.startsWith('content://')) {
-            const destPath = `${RNFS.TemporaryDirectoryPath}/${res.name}`;
-            await RNFS.copyFile(fileUri, destPath);
-            fileUri = destPath;
-          }
-          const content = await RNFS.readFile(fileUri, 'utf8');
-          
-          // Save to Zero-RAM SSD Memory
-          await saveToMemory(`Dosya: ${res.name}`, content);
-          // Send a tiny prompt to notify the agent directly
-          const msg = `[SİSTEM: Kullanıcı SSD belleğine belge yükledi: ${res.name}. İçeriğe ulaşmak için 'search_memory' kullan.]`;
-          onSend(msg);
-        } catch (err) {
-          console.error("File Read Error", err);
-        } finally {
-          setIsAnalyzing(false);
-        }
-      }
-    } catch (err) {
-      if (!DocumentPicker.isCancel(err)) {
-        console.error(err);
-      }
-    }
-  };
 
   const handleSend = () => {
     if (text.trim() && !disabled) {
@@ -144,28 +85,7 @@ export const ChatInput: React.FC<Props> = ({ onSend, disabled }) => {
       
       {!isTyping ? (
         <View style={styles.actionButtonsRow}>
-          <TouchableOpacity
-            style={[styles.micButton, isDark && styles.micButtonDark]}
-            onPress={handleDocumentPick}
-            disabled={disabled || isAnalyzing}
-          >
-            {isAnalyzing ? (
-              <ActivityIndicator size="small" color={isDark ? "#0A84FF" : "#007AFF"} />
-            ) : (
-              <Text style={styles.micIcon}>📎</Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.micButton, isDark && styles.micButtonDark]}
-            onPress={handleImagePick}
-            disabled={disabled || isAnalyzing}
-          >
-            {isAnalyzing ? (
-              <ActivityIndicator size="small" color={isDark ? "#0A84FF" : "#007AFF"} />
-            ) : (
-              <Text style={styles.micIcon}>📸</Text>
-            )}
-          </TouchableOpacity>
+
           <TouchableOpacity
             style={[styles.micButton, isDark && styles.micButtonDark, isRecording && styles.micButtonActive]}
             onPress={toggleRecording}

@@ -25,89 +25,32 @@ export const ChatScreen: React.FC = () => {
 
   const flatListRef = useRef<FlatList>(null);
 
-  const SYSTEM_PROMPT = `Sen 'Aisistan' adında gelişmiş bir yapay zeka asistanısın.
+  const SYSTEM_PROMPT = `Sen kullanıcının yerel cihazında çalışan "Aisistan" adlı zekasın.
 
-GÜNCEL VERİ VE BİLGİ İHTİYACINDA AŞAĞIDAKİ ARAÇLARI (TOOLS) KULLAN:
-1. ARAMA YAPMAK İÇİN: Kullanıcının sorusu spesifik bir cihaz, model, kişi, yer, fiyat, hava durumu veya güncel bilgi gerektiriyorsa SADECE şu formatta çıktı ver:
+GÜNCEL BİLGİ/FİYAT İHTİYACINDA SADECE JSON ÇIKTISI VER:
 {"action": "search", "query": "aranacak kelime"}
-
-2. SİTE OKUMAK İÇİN: Arama sonucundaki bir siteye girip içeriğini kazıman gerekiyorsa:
-{"action": "read_site", "url": "https://..."}
-
-3. TELEFON YÖNETİMİ İÇİN: Kullanıcı birini aramak, mesaj atmak, web sitesi açmak istiyorsa:
-{"action": "intent", "url": "tel:1234567890"}
-
-4. YEREL HAFIZAYI TARAMAK İÇİN: Kullanıcı daha önce öğrettiği bir bilgiyi sorarsa:
-{"action": "search_memory", "query": "aranacak kelime"}
 
 KURALLAR:
 1. JSON döndürdüğünde başka HİÇBİR metin yazma.
-2. BİLGİ BULDUKTAN SONRA: "Şu siteden bakabilirsiniz" DEME. TÜM BİLGİLERİ (özellikler, sayılar, fiyatlar) BİZZAT KENDİN MADDELER HALİNDE YAZ.
-3. "Çok güçlü", "harika" gibi yuvarlak kelimeler kullanma. NET SAYI VE TEKNİK TERİM kullan (48 MP, 4500 mAh, 3.2 GHz gibi).
-4. Harita için: [Haritada Gör](https://maps.google.com/?q=Yer+Adı)
-5. "Bilmiyorum", "Erişimim kısıtlı" veya "Yardımcı olamam" demek KESİNLİKLE YASAKTIR. Bilgiyi bulana kadar arama ve site okuma (JSON) araçlarını kullanacaksın.
-
---- ÖRÜNTÜLER (Bu örneklere BIREBIR göre davran) ---
-
-[HAVA DURUMU]
-Kullanıcı: İstanbul'da hava nasıl?
-Aisistan: {"action": "search", "query": "İstanbul hava durumu bugün sıcaklık derece"}
-Kullanıcı: Ankara'da yarın yağmur var mı?
-Aisistan: {"action": "search", "query": "Ankara yarın hava durumu yağmur"}
-
-[TELEFON TEKNİK ÖZELLİKLERİ - HER MARKA İÇİN]
-Kullanıcı: iPhone 17 Pro Max özellikleri neler?
-Aisistan: {"action": "search", "query": "iPhone 17 Pro Max teknik özellikler işlemci kamera ekran batarya mAh"}
-Kullanıcı: Samsung Galaxy S25 Ultra özellikleri?
-Aisistan: {"action": "search", "query": "Samsung Galaxy S25 Ultra işlemci RAM ekran kamera batarya özellikleri"}
-Kullanıcı: Xiaomi 15 Pro bataryası kaç mAh?
-Aisistan: {"action": "search", "query": "Xiaomi 15 Pro teknik özellikler batarya mAh"}
-Kullanıcı: Google Pixel 9 ekran boyutu?
-Aisistan: {"action": "search", "query": "Google Pixel 9 ekran boyutu inç çözünürlük teknik özellikler"}
-
-[ARAÇ TEKNİK ÖZELLİKLERİ]
-Kullanıcı: BMW M5 özellikleri neler?
-Aisistan: {"action": "search", "query": "BMW M5 2024 teknik özellikler beygir tork motor hacmi 0-100"}
-Kullanıcı: Toyota Corolla motor hacmi kaç?
-Aisistan: {"action": "search", "query": "Toyota Corolla 2024 motor hacmi beygir gücü tork teknik özellikler"}
-Kullanıcı: Volkswagen Golf GTI kaç beygir?
-Aisistan: {"action": "search", "query": "Volkswagen Golf GTI 2024 beygir gücü tork teknik özellikler"}
-
-[FİYAT ARAŞTIRMA]
-Kullanıcı: En ucuz iPhone 15 fiyatı nedir?
-Aisistan: {"action": "search", "query": "iPhone 15 en ucuz fiyat site:cimri.com OR site:akakce.com"}
-Kullanıcı: Samsung Galaxy S25 Türkiye fiyatı?
-Aisistan: {"action": "search", "query": "Samsung Galaxy S25 fiyat TL site:cimri.com OR site:akakce.com"}
-Kullanıcı: En uygun fiyatlı 5G telefon hangisi?
-Aisistan: {"action": "search", "query": "en uygun fiyatlı 5G telefon 2024 karşılaştırma site:cimri.com"}
-
-[NÜFUS / GÜNCEL İSTATİSTİK]
-Kullanıcı: Türkiye'nin nüfusu kaç?
-Aisistan: {"action": "search", "query": "Türkiye nüfusu 2024 TÜİK"}
-Kullanıcı: Japonya nüfusu kaç?
-Aisistan: {"action": "search", "query": "Japonya nüfusu 2024"}
-
-[GENEL BİLGİ - arama gerekmez]
-Kullanıcı: Amerika'nın başkenti neresi?
-Aisistan: Amerika Birleşik Devletleri'nin başkenti Washington D.C.'dir.
-Kullanıcı: Pi sayısı nedir?
 Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
 
   const headerHeight = useHeaderHeight();
 
   useEffect(() => {
     loadHistory();
-    try {
-      Tts.getInitStatus().then(() => {
-        Tts.setDefaultLanguage('tr-TR');
-        Tts.setDefaultRate(0.5);
-      }).catch(err => {
-        if (err.code === 'no_engine') {
-          Tts.requestInstallEngine();
-        }
-      });
-    } catch (e) {
-      console.warn("TTS initialization error", e);
+    if (Platform.OS === 'ios') {
+      try {
+        Tts.getInitStatus().then(() => {
+          Tts.setDefaultLanguage('tr-TR');
+          Tts.setDefaultRate(0.5);
+        }).catch(err => {
+          if (err.code === 'no_engine') {
+            Tts.requestInstallEngine();
+          }
+        });
+      } catch (e) {
+        console.warn("TTS initialization error", e);
+      }
     }
   }, []);
 
@@ -150,20 +93,30 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
   };
 
   const buildPrompt = (history: {role: string, text: string}[]) => {
-    let p = `<start_of_turn>user\n${SYSTEM_PROMPT}`;
-    if (persona) {
-      p += `\n\nKULLANICI ÇEKİRDEK HAFIZASI (Sohbet boyunca buna göre davran):\n${persona}`;
-    }
-    p += `<end_of_turn>\n`;
-    history.forEach(msg => {
+    let p = "";
+    
+    // Hafızayı 8 mesaja (4 soru-cevap) çıkarttık ki konu bütünlüğünü kaybetmesin
+    const recentHistory = history.length > 8 ? history.slice(history.length - 8) : history;
+
+    recentHistory.forEach((msg, index) => {
+      let content = msg.text;
+      
+      // Sistem komutunu (SYSTEM_PROMPT) SADECE kullanıcının gönderdiği en son mesaja gizlice ekle
+      if (index === recentHistory.length - 1 && msg.role === 'User') {
+        content = `${SYSTEM_PROMPT}\n\nKULLANICI SORUSU:\n${msg.text}`;
+        if (persona) content += `\n\nKULLANICI PROFİLİ:\n${persona}`;
+      }
+
       if (msg.role === 'User') {
-        p += `<start_of_turn>user\n${msg.text}<end_of_turn>\n`;
+        p += `<start_of_turn>user\n${content}<end_of_turn>\n`;
       } else if (msg.role === 'Assistant') {
-        p += `<start_of_turn>model\n${msg.text}<end_of_turn>\n`;
+        p += `<start_of_turn>model\n${content}<end_of_turn>\n`;
       } else if (msg.role === 'System') {
-        p += `<start_of_turn>user\n[GÜNCEL İNTERNET VERİSİ]: ${msg.text}\nYukarıdaki güncel verilere dayanarak kullanıcının son sorusunu doğal bir Türkçe ile yanıtla.<end_of_turn>\n`;
+        // Sistem verisini (arama sonuçlarını) user turn olarak yedir ki model görsün
+        p += `<start_of_turn>user\n[GÜNCEL VERİ]: ${content}<end_of_turn>\n`;
       }
     });
+    
     p += `<start_of_turn>model\n`;
     return p;
   };
@@ -250,7 +203,9 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
               // Smart Query Pre-processing with Fallback Safety
               let finalQuery = actionData.query;
               const lowerQ = finalQuery.toLowerCase();
-              if (lowerQ.includes('uçak') || lowerQ.includes('otobüs') || lowerQ.includes('bilet')) {
+              if (lowerQ.includes('hava') || lowerQ.includes('derece')) {
+                finalQuery += ' bugün sıcaklık derece';
+              } else if (lowerQ.includes('uçak') || lowerQ.includes('otobüs') || lowerQ.includes('bilet')) {
                 finalQuery += ' site:obilet.com OR site:enuygun.com OR site:turna.com';
               } else if (lowerQ.includes('fiyat') || lowerQ.includes('kaç tl') || lowerQ.includes('ne kadar')) {
                 finalQuery += ' site:cimri.com OR site:akakce.com';
@@ -273,7 +228,7 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
               currentHistory = [
                 ...currentHistory,
                 { role: 'Assistant', text: stepResponse },
-                { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Sonuçlardaki bilgileri (haber metni dahi olsa içindeki işlemci, ekran, kamera gibi teknik verileri bularak) BİZZAT KENDİN YAZ.\n2. Kullanıcıya ASLA "şu linke gidin" gibi cümleler kurma ve KESİNLİKLE LİNK VERME!\n3. Eğer aradığın bilgi sonuçlarda HİÇBİR ŞEKİLDE YOKSA uydurma ve "İnternette bu konu hakkında net bir veri bulunamadı" de. "Bilmiyorum" deme.` }
+                { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Sonuçlardaki bilgileri (kaç derece, güneşli/yağmurlu, işlemci, fiyat vb.) KENDİN YAZ.\n2. KESİNLİKLE "şu linke gidin" veya "siteden bakabilirsiniz" DEME! Link verme.\n3. Cevabının en sonuna mutlaka: "Başka sormak veya merak ettiğiniz bir şey var mı?" diye ekle.` }
               ];
               continue; // Ajan döngüye devam etsin
             } 

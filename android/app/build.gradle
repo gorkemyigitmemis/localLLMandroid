@@ -25,7 +25,7 @@ react {
 
     /* Bundling */
     //   A list containing the node command and its flags. Default is just 'node'.
-    // nodeExecutableAndArgs = ["node"]
+    nodeExecutableAndArgs = ["node"]
     //
     //   The command to run when bundling. By default is 'bundle'
     // bundleCommand = "ram-bundle"
@@ -85,6 +85,10 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    
+    aaptOptions {
+        noCompress 'gguf'
+    }
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
@@ -115,5 +119,40 @@ dependencies {
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
+    }
+}
+
+tasks.whenTaskAdded { task ->
+    if (task.name.startsWith('configureCMakeDebug') || task.name.startsWith('buildCMakeDebug')) {
+        task.doFirst {
+            def cachesDir = new File(System.getProperty("user.home"), ".gradle/caches")
+            if (cachesDir.exists()) {
+                cachesDir.traverse(type: groovy.io.FileType.FILES, nameFilter: 'graphicsConversions.h') { file ->
+                    if (file.absolutePath.replace('\\', '/').contains('prefab/modules/reactnative/include/react/renderer/core/graphicsConversions.h')) {
+                        def content = file.text
+                        if (content.contains('std::format("{}%", dimension.value)')) {
+                            content = content.replace('std::format("{}%", dimension.value)', 'std::to_string(dimension.value) + "%"')
+                            file.text = content
+                            println "PATCHED " + file.absolutePath
+                        }
+                    }
+                }
+            }
+        }
+        task.doLast {
+            def cachesDir = new File(System.getProperty("user.home"), ".gradle/caches")
+            if (cachesDir.exists()) {
+                cachesDir.traverse(type: groovy.io.FileType.FILES, nameFilter: 'graphicsConversions.h') { file ->
+                    if (file.absolutePath.replace('\\', '/').contains('prefab/modules/reactnative/include/react/renderer/core/graphicsConversions.h')) {
+                        def content = file.text
+                        if (content.contains('std::to_string(dimension.value) + "%"')) {
+                            content = content.replace('std::to_string(dimension.value) + "%"', 'std::format("{}%", dimension.value)')
+                            file.text = content
+                            println "REVERTED " + file.absolutePath
+                        }
+                    }
+                }
+            }
+        }
     }
 }

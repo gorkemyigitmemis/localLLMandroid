@@ -133,11 +133,16 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
       {!isLoaded ? (
         <View style={styles.content}>
           <Text style={styles.title}>Aisistan OS</Text>
-          <Text style={styles.subtitle}>Sistemi başlatmak için çekirdek yapay zeka modelini (.gguf) yükleyin.</Text>
+          <Text style={styles.subtitle}>Sistem başlatılıyor...</Text>
           
           <View style={styles.barrierContainer}>
             {isLoading ? (
-              <ActivityIndicator size="large" color="#0A84FF" />
+              <View style={{ alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#0A84FF" />
+                <Text style={{ color: 'white', marginTop: 15, textAlign: 'center', opacity: 0.7 }}>
+                  Yapay zeka motoru hazırlanıyor.{'\n'}İlk açılışta modelin kurulması 1-2 dakika sürebilir, lütfen bekleyin...
+                </Text>
+              </View>
             ) : (
               <TouchableWithoutFeedback onPress={handleSelectModel}>
                 <View style={styles.uploadButton}>

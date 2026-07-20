@@ -23,7 +23,11 @@ export const performWebSearch = async (query: string): Promise<string> => {
       'Upgrade-Insecure-Requests': '1'
     };
 
-    const response = await fetch(url, { headers });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+    const response = await fetch(url, { headers, signal: controller.signal });
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
       throw new Error(`Search request failed with status: ${response.status}`);
