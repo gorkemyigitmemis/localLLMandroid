@@ -27,12 +27,10 @@ export const ChatScreen: React.FC = () => {
 
   const SYSTEM_PROMPT = `Sen kullanıcının yerel cihazında çalışan "Aisistan" adlı zekasın.
 
-GÜNCEL BİLGİ/FİYAT İHTİYACINDA SADECE JSON ÇIKTISI VER:
-{"action": "search", "query": "aranacak kelime"}
-
 KURALLAR:
-1. JSON döndürdüğünde başka HİÇBİR metin yazma.
-Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
+1. Kısa, öz ve net cevaplar ver.
+2. Link verme, site adı verme, bilgiyi özetle.
+3. Asla "Aisistan:" veya "Bot:" diye kendini tanıtma, doğrudan cevaba gir.`;
 
   const headerHeight = useHeaderHeight();
 
@@ -92,37 +90,53 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
     ]);
   };
 
-  const buildPrompt = (history: {role: string, text: string}[]) => {
+  const buildPrompt = (history: {role: string, text: string}[], forceAction?: 'search' | 'intent') => {
     let p = "";
     
-    // Hafızayı 8 mesaja (4 soru-cevap) çıkarttık ki konu bütünlüğünü kaybetmesin
     const recentHistory = history.length > 8 ? history.slice(history.length - 8) : history;
 
+    // Modelin kafasının karışmaması için ardışık User ve System mesajlarını tek bir 'user' turunda birleştiriyoruz
+    let mergedTurns: {role: string, text: string}[] = [];
+    let currentTurn: any = null;
+
+    recentHistory.forEach((msg) => {
+      if (msg.role === 'User' || msg.role === 'System') {
+        const prefix = msg.role === 'System' ? "\n\n[GÜNCEL SİSTEM BİLGİSİ]: " : (currentTurn && currentTurn.role === 'user' ? "\n\n" : "");
+        if (currentTurn && currentTurn.role === 'user') {
+          currentTurn.text += `${prefix}${msg.text}`;
+        } else {
+          currentTurn = { role: 'user', text: `${msg.role === 'System' ? '[GÜNCEL SİSTEM BİLGİSİ]: ' : ''}${msg.text}` };
+          mergedTurns.push(currentTurn);
+        }
+      } else {
+        currentTurn = { role: 'model', text: msg.text };
+        mergedTurns.push(currentTurn);
+      }
+    });
+
     let lastUserIndex = -1;
-    for (let i = recentHistory.length - 1; i >= 0; i--) {
-      if (recentHistory[i].role === 'User') {
+    for (let i = mergedTurns.length - 1; i >= 0; i--) {
+      if (mergedTurns[i].role === 'user') {
         lastUserIndex = i;
         break;
       }
     }
 
-    recentHistory.forEach((msg, index) => {
-      let content = msg.text;
+    mergedTurns.forEach((turn, index) => {
+      let content = turn.text;
       
-      // Sistem komutunu (SYSTEM_PROMPT) SADECE kullanıcının gönderdiği en son mesaja gizlice ekle
       if (index === lastUserIndex) {
-        content = `${SYSTEM_PROMPT}\n\nKULLANICI SORUSU:\n${msg.text}`;
+        content = `${SYSTEM_PROMPT}\n\nKULLANICI SORUSU VE SİSTEM VERİLERİ:\n${content}`;
         if (persona) content += `\n\nKULLANICI PROFİLİ:\n${persona}`;
+        
+        if (forceAction === 'search') {
+            content += `\n\n[ZORUNLU ARAMA] Bu soru güncel veya net bir bilgi gerektiriyor. Kendi ezberindeki bilgileri KESİNLİKLE kullanma! SADECE {"action": "search", "query": "..."} formatında tam bir JSON döndür. JSON dışında tek bir kelime dahi yazma!`;
+        } else if (forceAction === 'intent') {
+            content += `\n\n[ZORUNLU KOMUT] Kullanıcı telefondaki bir uygulamayı açmanı istiyor. Başka HİÇBİR ŞEY yazma, SADECE {"action": "intent", "url": "appname://"} formatında JSON çıktısı ver. Örnek url'ler: whatsapp://, instagram://, youtube://, spotify://`;
+        }
       }
 
-      if (msg.role === 'User') {
-        p += `<start_of_turn>user\n${content}<end_of_turn>\n`;
-      } else if (msg.role === 'Assistant') {
-        p += `<start_of_turn>model\n${content}<end_of_turn>\n`;
-      } else if (msg.role === 'System') {
-        // Sistem verisini (arama sonuçlarını) user turn olarak yedir ki model görsün
-        p += `<start_of_turn>user\n[GÜNCEL VERİ]: ${content}<end_of_turn>\n`;
-      }
+      p += `<start_of_turn>${turn.role}\n${content}<end_of_turn>\n`;
     });
     
     p += `<start_of_turn>model\n`;
@@ -141,17 +155,9 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
     const isDataQuery = /(hava durumu|kaç derece|nüfus|fiyat|özellik|teknik detay|kimdir|nedir|beygir|motor|saat kaç|uçak|otobüs|tren|feribot|bilet|kaç para|ne kadar|dolar|euro|altın|bitcoin|kripto|döviz|gram|borsa|maç|derbi|skor|fikstür|galatasaray|fenerbahçe|beşiktaş|trabzonspor|lig|film|dizi|sinema|imdb|vizyon|yemek|tarifi|nasıl yapılır|malzemeler|nöbetçi eczane|burç|günlük yorum|haber|son dakika|gündem)/i.test(userQuery);
     const isIntentQuery = /(instagram|whatsapp|youtube|spotify|twitter|facebook|kamera).*?(aç|başlat|gir|mesaj at)/i.test(userQuery);
 
-    if (isIntentQuery) {
-        currentHistory.push({
-            role: 'System', 
-            text: `[ZORUNLU KOMUT] Kullanıcı telefondaki bir uygulamayı açmanı istiyor. Başka HİÇBİR ŞEY yazma, SADECE {"action": "intent", "url": "appname://"} formatında JSON çıktısı ver. Örnek url'ler: whatsapp://, instagram://, youtube://, spotify://`
-        });
-    } else if (isDataQuery) {
-        currentHistory.push({
-            role: 'System', 
-            text: `[ZORUNLU ARAMA] Bu soru güncel veya net bir bilgi gerektiriyor. Kendi bilgilerini kullanma, SADECE {"action": "search", "query": "..."} formatında yanıt ver!`
-        });
-    }
+    let initialForceAction: 'search' | 'intent' | undefined;
+    if (isIntentQuery) initialForceAction = 'intent';
+    else if (isDataQuery) initialForceAction = 'search';
 
     try {
       for (let step = 0; step < 3; step++) {
@@ -161,7 +167,7 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
         try {
           await llamaContext.completion(
             {
-              prompt: buildPrompt(currentHistory),
+              prompt: buildPrompt(currentHistory, step === 0 ? initialForceAction : undefined),
               n_predict: 800,
               temperature: 0.3, 
             },
@@ -257,7 +263,7 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
               currentHistory = [
                 ...currentHistory,
                 { role: 'Assistant', text: stepResponse },
-                { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Sonuçlardaki bilgileri (kaç derece, güneşli/yağmurlu, işlemci, fiyat vb.) KENDİN YAZ.\n2. KESİNLİKLE "şu linke gidin" veya "siteden bakabilirsiniz" DEME! Link verme.\n3. Cevabının en sonuna mutlaka: "Başka sormak veya merak ettiğiniz bir şey var mı?" diye ekle.` }
+                { role: 'System', text: `Arama sonuçları:\n${searchResults}\n\nÖNEMLİ GÖREV:\n1. Sonuçlardaki bilgileri (fiyat, özellik vb.) KENDİN YAZ.\n2. EĞER arama sonuçlarında net bir fiyat veya bilgi YOKSA (örneğin uçak/otobüs bileti), güncel duruma göre TAHMİNİ ve GERÇEKÇİ bir fiyat aralığı ver (Örn: Uçak 1500-2500 TL (1.5 saat), Otobüs 800-1200 TL (12 saat) gibi).\n3. KESİNLİKLE "şu linke gidin", "siteden bakabilirsiniz" veya "karşılaştırabilirsiniz" DEMEK YASAKTIR! Sadece doğrudan net fiyat veya tahmini fiyat söyle.\n4. Cevabının en sonuna: "Başka sormak istediğiniz bir şey var mı?" diye ekle.` }
               ];
               continue; // Ajan döngüye devam etsin
             } 
