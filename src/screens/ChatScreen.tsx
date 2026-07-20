@@ -130,11 +130,11 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
     const userQuery = history[history.length - 1].text.toLowerCase();
 
     // DENGELİ YÖNLENDİRİCİ (Sadece net veri/bilgi arayışlarında devreye girer, normal sohbeti bozmaz)
-    const isDataQuery = /(hava durumu|kaç derece|nüfus|fiyat|özellikleri|teknik detay|kimdir|nedir|kaç beygir|motor hacmi|saat kaç|uçak|otobüs|tren|feribot|bilet|kaç para|ne kadar)/i.test(userQuery);
+    const isDataQuery = /(hava durumu|kaç derece|nüfus|fiyat|özellik|teknik detay|kimdir|nedir|beygir|motor|saat kaç|uçak|otobüs|tren|feribot|bilet|kaç para|ne kadar|dolar|euro|altın|bitcoin|kripto|döviz|gram|borsa|maç|derbi|skor|fikstür|galatasaray|fenerbahçe|beşiktaş|trabzonspor|lig|film|dizi|sinema|imdb|vizyon|yemek|tarifi|nasıl yapılır|malzemeler|nöbetçi eczane|burç|günlük yorum)/i.test(userQuery);
     if (isDataQuery) {
         currentHistory.push({
             role: 'System', 
-            text: `[ZORUNLU ARAMA] Bu soru güncel veya net bir bilgi (hava, nüfus, fiyat, bilet, özellik) gerektiriyor. Kendi bilgilerini kullanma, SADECE {"action": "search", "query": "..."} formatında yanıt ver!`
+            text: `[ZORUNLU ARAMA] Bu soru güncel veya net bir bilgi gerektiriyor. Kendi bilgilerini kullanma, SADECE {"action": "search", "query": "..."} formatında yanıt ver!`
         });
     }
 
@@ -209,6 +209,18 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
                 finalQuery += ' site:obilet.com OR site:enuygun.com OR site:turna.com';
               } else if (lowerQ.includes('fiyat') || lowerQ.includes('kaç tl') || lowerQ.includes('ne kadar')) {
                 finalQuery += ' site:cimri.com OR site:akakce.com';
+              } else if (lowerQ.includes('dolar') || lowerQ.includes('euro') || lowerQ.includes('altın') || lowerQ.includes('bitcoin') || lowerQ.includes('kripto') || lowerQ.includes('döviz') || lowerQ.includes('borsa')) {
+                finalQuery += ' site:doviz.com OR site:coinmarketcap.com';
+              } else if (lowerQ.includes('maç') || lowerQ.includes('derbi') || lowerQ.includes('skor') || lowerQ.includes('fikstür') || lowerQ.includes('lig')) {
+                finalQuery += ' site:mackolik.com OR site:beinsports.com.tr';
+              } else if (lowerQ.includes('film') || lowerQ.includes('dizi') || lowerQ.includes('sinema') || lowerQ.includes('imdb')) {
+                finalQuery += ' site:beyazperde.com OR site:imdb.com';
+              } else if (lowerQ.includes('tarifi') || lowerQ.includes('nasıl yapılır') || lowerQ.includes('malzemeler')) {
+                finalQuery += ' site:nefisyemektarifleri.com';
+              } else if (lowerQ.includes('nöbetçi eczane')) {
+                finalQuery += ' site:eczaneler.gen.tr';
+              } else if (lowerQ.includes('burç') || lowerQ.includes('günlük yorum')) {
+                finalQuery += ' site:elele.com.tr';
               } else if (lowerQ.includes('özellik') || lowerQ.includes('işlemci') || lowerQ.includes('batarya') || lowerQ.includes('teknik detay')) {
                 if (!lowerQ.includes('araba') && !lowerQ.includes('motor') && !lowerQ.includes('beygir')) {
                   finalQuery += ' site:epey.com';
