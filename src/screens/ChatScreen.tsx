@@ -98,11 +98,19 @@ Aisistan: Pi (π) sayısı yaklaşık 3.14159'dur.`;
     // Hafızayı 8 mesaja (4 soru-cevap) çıkarttık ki konu bütünlüğünü kaybetmesin
     const recentHistory = history.length > 8 ? history.slice(history.length - 8) : history;
 
+    let lastUserIndex = -1;
+    for (let i = recentHistory.length - 1; i >= 0; i--) {
+      if (recentHistory[i].role === 'User') {
+        lastUserIndex = i;
+        break;
+      }
+    }
+
     recentHistory.forEach((msg, index) => {
       let content = msg.text;
       
       // Sistem komutunu (SYSTEM_PROMPT) SADECE kullanıcının gönderdiği en son mesaja gizlice ekle
-      if (index === recentHistory.length - 1 && msg.role === 'User') {
+      if (index === lastUserIndex) {
         content = `${SYSTEM_PROMPT}\n\nKULLANICI SORUSU:\n${msg.text}`;
         if (persona) content += `\n\nKULLANICI PROFİLİ:\n${persona}`;
       }
